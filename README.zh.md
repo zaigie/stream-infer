@@ -1,7 +1,7 @@
 # Stream Infer
 
 <p align="left">
-   <a href="./README.md">Englist</a> | <strong>简体中文</strong>
+   <a href="./README.md">English</a> | <strong>简体中文</strong>
 </p>
 
 Stream Infer 是一个为视频处理应用中的流式推理设计的 Python 库。它包含用于视频帧生成、推理算法和结果导出的模块化组件。

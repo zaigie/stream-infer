@@ -1,7 +1,7 @@
 # Stream Infer
 
 <p align="left">
-   <strong>Englist</strong> | <a href="./README.zh.md">简体中文</a>
+   <strong>English</strong> | <a href="./README.zh.md">简体中文</a>
 </p>
 
 Stream Infer is a Python library designed for efficient streaming inference in video processing applications. It features modular components for video frame production, inference algorithms, and results exporting.
