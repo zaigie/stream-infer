@@ -13,7 +13,7 @@ class Inference:
         self.timers[algo_instance.name] = Timer(interval)
         algo_instance.init()
 
-    def start(self, player, is_offline: bool = False):
+    def start(self, player, fps: int = None, is_offline: bool = False):
         """
         Easy to use function to start inference with realtime mode.
         """
@@ -21,7 +21,7 @@ class Inference:
             for _, current_frame in player.play():
                 self.auto_run_specific_inference(player.fps, current_frame)
         else:
-            player.play_realtime()
+            player.play_realtime(fps)
             while player.is_active():
                 self.run_inference()
 
