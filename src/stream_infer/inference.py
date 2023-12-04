@@ -2,8 +2,8 @@ from .timer import Timer
 
 
 class Inference:
-    def __init__(self, frame_queue, exporter=None):
-        self.frame_queue = frame_queue
+    def __init__(self, frame_tracker, exporter=None):
+        self.frame_tracker = frame_tracker
         self.exporter = exporter
         self.inferences_info = []
         self.timers = {}
@@ -18,11 +18,11 @@ class Inference:
         Easy to use function to start inference with realtime mode.
         """
         if is_offline:
-            for _, current_frame in player.run():
-                self.auto_run_specific_inference(current_frame)
+            for _, current_frame in player.play():
+                self.auto_run_specific_inference(player.fps, current_frame)
         else:
             player.play_realtime()
-            while player.is_activate():
+            while player.is_active():
                 self.run_inference()
 
     def run_inference(self):
@@ -54,31 +54,12 @@ class Inference:
 
     def _inference_task(self, inference_info):
         algo_instance, frame_count, frame_step, _ = inference_info
-        frames = self.frame_queue.get_frames(frame_count, frame_step)
+        frames = self.frame_tracker.get_frames(frame_count, frame_step)
         if not frames:
             return -1
         result = algo_instance.run(frames)
         if self.exporter:
             self.exporter.collect(
-                (self.frame_queue.current_time, algo_instance.name, result)
+                (self.frame_tracker.get_current_time(), algo_instance.name, result)
             )
         return result
-
-
-class BaseAlgo:
-    def __init__(self, name=None) -> None:
-        if not name:
-            name = self.__class__.__name__
-        self.name = name
-
-    def init(self):
-        """
-        Initialize the algo model or other resources.
-        """
-        raise NotImplementedError
-
-    def run(self):
-        """
-        Run inference and return the inference result.
-        """
-        raise NotImplementedError

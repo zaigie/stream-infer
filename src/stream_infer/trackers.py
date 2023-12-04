@@ -1,3 +1,4 @@
+from multiprocessing.managers import BaseManager
 from collections import deque
 from typing import List, Any
 
@@ -24,3 +25,20 @@ class FrameTracker:
 
     def get_current_time(self) -> int:
         return self.current_time
+
+
+class TrackerManager:
+    def __init__(self):
+        self._manager = None
+        self._tracker = None
+
+    def create(self, max_size: int = 120):
+        if self._manager is None:
+            self._initialize_manager(max_size)
+        return self._tracker
+
+    def _initialize_manager(self, max_size):
+        BaseManager.register("FrameTracker", FrameTracker)
+        self._manager = BaseManager()
+        self._manager.start()
+        self._tracker = self._manager.FrameTracker(max_size)

@@ -1,21 +1,22 @@
 import time
 import multiprocessing as mp
-from multiprocessing.managers import BaseManager
 
 from .timer import Timer
 
 
 class Player:
-    def __init__(self, frame_tracker, producer, path):
+    def __init__(self, producer, frame_tracker, path):
         self.frame_tracker = frame_tracker
         self.producer = producer
         self.path = path
         self.process = None
+        self.fps = None
         self.current_frame = 0
 
     def play(self):
         try:
             fps = self.producer.get_info(self.path)["fps"]
+            self.fps = fps
         except Exception as e:
             raise ValueError(f"Error getting fps: {e}")
 
@@ -34,13 +35,13 @@ class Player:
         """
         Starts the appropriate streaming process based on the frame count.
         """
-        if not isinstance(self.frame_tracker, BaseManager):
-            raise TypeError("frame_tracker must be a BaseManager")
 
         try:
-            frame_count = self.producer.get_info(self.path)["frame_count"]
+            info = self.producer.get_info(self.path)
+            frame_count = info["frame_count"]
+            self.fps = info["fps"]
         except Exception as e:
-            raise ValueError(f"Error getting frame count: {e}")
+            raise ValueError(f"Error getting info: {e}")
 
         if frame_count == -1:
             target = self.normal_stream
