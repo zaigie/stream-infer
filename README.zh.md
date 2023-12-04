@@ -1,22 +1,21 @@
 # Stream Infer
 
 <p align="left">
-   <strong>Englist</strong> | <a href="./README.zh.md">简体中文</a>
+   <a href="./README.md">Englist</a> | <strong>简体中文</strong>
 </p>
 
-Stream Infer is a Python library designed for efficient streaming inference in video processing applications. It features modular components for video frame production, inference algorithms, and results exporting.
+Stream Infer 是一个为视频处理应用中的流式推理设计的 Python 库。它包含用于视频帧生成、推理算法和结果导出的模块化组件。
 
-## Installation
+## 安装
 
 ```bash
 pip install stream_infer
 ```
 
-## Quick Start
+## 快速开始
 
-Here's a simple example to get you started with Stream Infer:
+以下是一个 Stream Infer 的简单示例，以帮助您开始使用：
 
-````python
 ```python
 from stream_infer import Inference, FrameTracker, TrackerManager, Player
 from stream_infer.algo import BaseAlgo
@@ -28,13 +27,13 @@ import time
 
 class ExampleAlgo(BaseAlgo):
     def init(self):
-        logger.info(f"{self.name} init")
+        logger.info(f"{self.name} 已初始化")
 
     def run(self, frames):
-        logger.debug(f"{self.name} start infer {len(frames)} frames")
+        logger.debug(f"{self.name} 开始推理 {len(frames)} 帧")
         time.sleep(0.3)
         result = {"name": self.name}
-        logger.debug(f"{self.name} infer result: {result}")
+        logger.debug(f"{self.name} 推理完成: {result}")
         return result
 
 class Exporter(BaseExporter):
@@ -62,8 +61,8 @@ if __name__ == "__main__":
 
     player = Player(producer, frame_tracker, video)
     inference.start(player, fps=play_fps, is_offline=OFFLINE)
-````
+```
 
-## License
+## 许可证
 
-Stream Infer is licensed under the [Apache License](LICENSE).
+Stream Infer 根据 [Apache 许可证](LICENSE) 授权。

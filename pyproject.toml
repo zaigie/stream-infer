@@ -7,7 +7,7 @@ name = "stream_infer"
 version = "0.1.0"
 description = "Real-time/offline analytics framework for video and streaming media"
 readme = "README.md"
-license = "Apache-2.0"
+license = { file = "LICENSE" }
 authors = [
     { name = "ZaiGie", email = "jokerwho@yeah.net" },
 ]
