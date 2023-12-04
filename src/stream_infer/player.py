@@ -1,5 +1,6 @@
 import time
 import multiprocessing as mp
+from multiprocessing.managers import BaseProxy
 
 from .timer import Timer
 from .log import logger
@@ -39,7 +40,13 @@ class Player:
         """
         Starts the appropriate streaming process based on the frame count.
         """
-
+        if not isinstance(self.frame_tracker, BaseProxy):
+            logger.error(
+                f"Frame tracker is not an proxy: {type(self.frame_tracker)}, use TrackerManager().create() to create one"
+            )
+            raise ValueError(
+                f"Frame tracker is not an proxy: {type(self.frame_tracker)}, use TrackerManager().create() to create one"
+            )
         try:
             info = self.producer.get_info(self.path)
             frame_count = info["frame_count"]
