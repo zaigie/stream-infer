@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "stream_infer"
-version = "0.0.1"
+version = "0.0.2"
 description = "Real-time/offline analytics framework for video and streaming media"
 readme = "README.md"
 license = { file = "LICENSE" }
