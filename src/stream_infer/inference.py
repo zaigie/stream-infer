@@ -18,7 +18,7 @@ class Inference:
         Easy to use function to start inference with realtime mode.
         """
         if is_offline:
-            for _, current_frame in player.play():
+            for _, current_frame in player.play(fps):
                 self.auto_run_specific_inference(player.fps, current_frame)
         else:
             player.play_realtime(fps)
