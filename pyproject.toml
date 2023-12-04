@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "stream_infer"
+version = "0.1.0"
+description = "Real-time/offline analytics framework for video and streaming media"
+readme = "README.md"
+license = "Apache-2.0"
+authors = [
+    { name = "ZaiGie", email = "jokerwho@yeah.net" },
+]
+dependencies = [
+    "opencv-python>=4.8.1.0, <5",
+    "imageio>=2.9.0",
+    "imageio-ffmpeg>=0.4.7",
+    "loguru>=0.6.0",
+]
+requires-python = ">= 3.8.6"
+classifiers = [
+  "Typing :: Typed",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Operating System :: OS Independent",
+  "Operating System :: POSIX",
+  "Operating System :: MacOS",
+  "Operating System :: POSIX :: Linux",
+  "Operating System :: Microsoft :: Windows",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "License :: OSI Approved :: Apache Software License"
+]
+
+[project.urls]
+Homepage = "https://github.com/zaigie/stream_infer"
+Repository = "https://github.com/zaigie/stream_infer"
