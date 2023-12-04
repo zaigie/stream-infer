@@ -1,8 +1,6 @@
 import av
 import cv2
 
-from ..player import Player
-
 
 class PyAVProducer:
     def __init__(self, width: int, height: int, format: str = "rgb24"):
