@@ -9,7 +9,7 @@ Stream Infer is a Python library designed for efficient streaming inference in v
 ## Installation
 
 ```bash
-pip install stream_infer
+pip install stream-infer
 ```
 
 ## Quick Start

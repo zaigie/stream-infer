@@ -9,7 +9,7 @@ Stream Infer 是一个为视频处理应用中的流式推理设计的 Python �
 ## 安装
 
 ```bash
-pip install stream_infer
+pip install stream-infer
 ```
 
 ## 快速开始
