@@ -67,13 +67,25 @@ if __name__ == "__main__":
 
 ### 实时推理
 
+![时序](./docs/img/real-time.png)
+
 实时推理是指输入一个视频或流，视频或流以正常的现实时间播放速度进行播放，并添加帧到帧轨道中，播放进程与推理进程独立，由于推理无论如何都会花费一定时间，所以会产生或大或小的结果延迟，但不会造成内存泄漏和堆积。
 
 ### 离线推理
 
+**处理性能好**
+
+![](./docs/img/offline_good.png)
+
+**处理性能差**
+
+![](./docs/img/offline_bad.png)
+
 离线推理是指输入一个视频（这里不能输入流了），以当前计算机能处理的速度，在取帧的同时串行执行推理，取帧与推理交错，由于推理无论如何都会花费一定时间，根据机器性能，整个进程的运行时间可能大于也可能小于视频时长。
 
 ## 模块
+
+![流程图](./docs/img/flow.svg)
 
 ### Step1. BaseAlgo
 
@@ -205,7 +217,7 @@ inference.load_algo(AnyOtherAlgo("other"), 5, 6, 60)
 其中，我们可以为 HeadDetectionAlgo 指定一个 name，用于标识运行的算法名称（在 Exporter 收集的时候需要且避免重复），同时注意一下参数：
 
 - frame_count：算法需要获取的帧数量，也就是最终 run() 函数中收到的 frames 数量。
-- frame_step：表示每隔 `frame_step` 取 `frame_count` 帧，如果该参数填入 fps，那么就意味着每秒取最后的 `frame_count` 帧。
+- frame_step：表示每隔 `frame_step` 取 1 帧，共取 `frame_count` 帧，如果该参数填入 fps，那么就意味着每秒取最后的 `frame_count` 帧。
 - interval：算法调用频率，如上的 `AnyOtherAlgo` 就只会在一分钟才调用一次
 
 ### Step6. Player & run

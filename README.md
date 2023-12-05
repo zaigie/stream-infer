@@ -67,13 +67,25 @@ if __name__ == "__main__":
 
 ### Real-time Inference
 
+![Time Sequence](./docs/img/real-time.png)
+
 Real-time inference refers to inputting a video or stream, where the video or stream plays at normal real-time speed, adding frames to the frame track. The playback process and the inference process are independent. Since inference will take a certain amount of time, it will cause more or less delay in results, but it will not cause memory leakage or pile-up.
 
 ### Offline Inference
 
+**Good performance**
+
+![](./docs/img/offline_good.png)
+
+**Poor performance**
+
+![](./docs/img/offline_bad.png)
+
 Offline inference refers to inputting a video (streams are not applicable here), processing at the speed the current computer can handle. Frame fetching and inference are interleaved. Since inference will take a certain amount of time, depending on the machine performance, the total runtime of the process may be longer or shorter than the video duration.
 
 ## Modules
+
+![Flow](./docs/img/flow.svg)
 
 ### Step1. BaseAlgo
 
@@ -205,7 +217,7 @@ inference.load_algo(AnyOtherAlgo("other"), 5, 6, 60)
 Here, we can specify a name for HeadDetectionAlgo, used to identify the running algorithm name (needed when collecting with Exporter and to avoid duplication). Also note the parameters:
 
 - frame_count: The number of frames the algorithm needs to fetch, which is also the number of frames finally received in the `run()` function.
-- frame_step: Indicates that for every `frame_step`, `frame_count` frames are fetched. If this parameter is filled with fps, it means that the last `frame_count` frames per second are fetched.
+- frame_step: Indicates that for every `frame_step`, 1 frames are fetched, a total of 'frame_count' frames. If this parameter is filled with fps, it means that the last `frame_count` frames per second are fetched.
 - interval: The frequency of algorithm invocation, like the above `AnyOtherAlgo` which will only be called once a minute.
 
 ### Step6. Player & run
