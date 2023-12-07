@@ -7,106 +7,112 @@ from .log import logger
 
 
 class Player:
-    def __init__(self, producer, frame_tracker, path):
-        self.frame_tracker = frame_tracker
+    def __init__(self, dispatcher, producer, path):
+        self.dispatcher = dispatcher
         self.producer = producer
         self.path = path
+        try:
+            self.info = self.producer.get_info(self.path)
+        except Exception as e:
+            raise ValueError(f"Error getting info: {e}")
+        self.fps = self.info["fps"]
+        self.play_fps = self.fps
+        self.frame_count = self.info["frame_count"]
         self.process = None
-        self.fps = None
-        self.current_frame = 0
+        self.is_end = mp.Value("b", False)
 
     def play(self, fps=None):
-        try:
-            original_fps = self.producer.get_info(self.path)["fps"]
-            if fps is None:
-                fps = original_fps
-            self.fps = fps
-        except Exception as e:
-            raise ValueError(f"Error getting fps: {e}")
-
+        fps = self.fps if fps is None else fps
+        self.play_fps = fps
         interval_count = 0
 
-        for frame in self.producer.read(self.path, fps):
-            self.frame_tracker.add_frame(frame)
+        for idx, frame in enumerate(self.producer.read(self.path, fps)):
+            self.dispatcher.add_frame(frame)
             interval_count += 1
             if interval_count >= fps:
                 interval_count = 0
-                self.frame_tracker.increase_current_time()
-                logger.debug(f"current time: {self.get_current_time_str()}")
-            self.current_frame += 1
-            yield frame, self.current_frame
+                self.dispatcher.increase_current_time()
+                logger.debug(f"current time: {self.get_play_time()}")
+            yield frame, self.dispatcher.get_current_frame()
 
-    def play_realtime(self, fps=None):
+    def play_async(self, fps=None):
         """
         Starts the appropriate streaming process based on the frame count.
         """
-        if not isinstance(self.frame_tracker, BaseProxy):
+        if not isinstance(self.dispatcher, BaseProxy):
             logger.error(
-                f"Frame tracker is not an proxy: {type(self.frame_tracker)}, use TrackerManager().create() to create one"
+                f"Dispatcher is not an proxy: {type(self.dispatcher)}, use DispatcherManager().create() to create one"
             )
             raise ValueError(
-                f"Frame tracker is not an proxy: {type(self.frame_tracker)}, use TrackerManager().create() to create one"
+                f"Dispatcher is not an proxy: {type(self.dispatcher)}, use DispatcherManager().create() to create one"
             )
-        try:
-            info = self.producer.get_info(self.path)
-            frame_count = info["frame_count"]
-            original_fps = info["fps"]
-            if fps is None or fps >= original_fps:
-                fps = original_fps
-                if fps > 30:
-                    logger.warning(
-                        f"FPS {fps} is too high, if your player is playing more slowly than the actual time, set a lower fps"
-                    )
-            self.fps = fps
-        except Exception as e:
-            raise ValueError(f"Error getting info: {e}")
 
-        if frame_count == -1:
+        self.rt_frames = mp.Queue()
+        if fps is None or fps >= self.fps:
+            fps = self.fps
+            if fps > 30:
+                logger.warning(
+                    f"FPS {fps} is too high, if your player is playing more slowly than the actual time, set a lower play fps"
+                )
+        self.play_fps = fps
+
+        if self.frame_count == -1:
             target = self.normal_stream
         else:
             target = self.video_stream
 
-        self.process = mp.Process(
-            target=target, args=(self.frame_tracker, self.producer, self.path)
-        )
+        self.process = mp.Process(target=target)
         self.process.start()
+        return self.process
+
+    def stop(self):
+        if self.process:
+            self.is_end.value = True
+        self.process.terminate()
 
     def is_active(self) -> bool:
         """
         Checks if the streaming process is still running.
         """
-        return self.process.is_alive() if self.process else False
+        return (
+            self.process.is_alive() and not self.is_end.value if self.process else False
+        )
 
-    def get_current_time_str(self) -> str:
-        current_time = self.frame_tracker.get_current_time()
+    def get_play_time(self) -> str:
+        current_time = self.dispatcher.get_current_time()
         return f"{current_time // 3600:02d}:{current_time // 60 % 60:02d}:{current_time % 60:02d}"
 
-    def video_stream(self, frame_tracker, producer, path):
+    def video_stream(self):
         """
         Handles streaming for video files. Frames are processed at a rate determined by the video's FPS.
         """
-        base_interval = 1 / self.fps
+        base_interval = 1 / self.play_fps
         start_time = time.time()
         interval_count = 0
 
-        for idx, frame in enumerate(producer.read(path, self.fps)):
+        for idx, frame in enumerate(self.producer.read(self.path, self.play_fps)):
             target_time = start_time + (idx * base_interval)
             time.sleep(max(0, target_time - time.time()))
-
-            frame_tracker.add_frame(frame)
+            self.dispatcher.add_frame(frame)
+            self.rt_frames.put(frame)
             interval_count += 1
-            if interval_count >= self.fps:
+            if interval_count >= self.play_fps:
                 interval_count = 0
-                frame_tracker.increase_current_time()
-                logger.debug(f"current time: {self.get_current_time_str()}")
+                self.dispatcher.increase_current_time()
+                logger.debug(f"current time: {self.get_play_time()}")
 
-    def normal_stream(self, frame_tracker, producer, path):
+        self.is_end.value = True
+
+    def normal_stream(self):
         """
         Handles streaming for non-video files. Frames are processed at regular intervals.
         """
         timer = Timer(interval=1)
-        for frame in producer.read(path, self.fps):
+        for frame in self.producer.read(self.path, self.play_fps):
             if timer.is_time():
-                frame_tracker.increase_current_time()
-                logger.debug(f"current time: {self.get_current_time_str()}")
-            frame_tracker.add_frame(frame)
+                self.dispatcher.increase_current_time()
+                logger.debug(f"current time: {self.get_play_time()}")
+            self.dispatcher.add_frame(frame)
+            self.rt_frames.put(frame)
+
+        self.is_end.value = True

@@ -1,12 +1,14 @@
 import av
 import cv2
 
+from ..log import logger
+
 
 class PyAVProducer:
-    def __init__(self, width: int, height: int, format: str = "bgr24"):
+    def __init__(self, width: int, height: int, format=None):
         self.width = width
         self.height = height
-        self.format = format
+        self.format = "bgr24" if format is None else format
 
     def read(self, path, fps=None):
         """
@@ -25,15 +27,16 @@ class PyAVProducer:
             video_stream = next(s for s in container.streams if s.type == "video")
             original_fps = video_stream.base_rate
 
-            # Calculate the frame skip rate if fps is set and original_fps is higher
-            skip_rate = 1
+            # Calculate the frame skip interval as a float if fps is set and original_fps is higher
+            frame_interval = 1.0
             if fps is not None and original_fps > fps:
-                skip_rate = int(original_fps // fps)
+                frame_interval = original_fps / fps
 
             frame_index = 0
+            next_frame_to_process = 0
             for frame in container.decode(video=0):
-                # Skip frames based on the calculated skip rate
-                if frame_index % skip_rate == 0:
+                # Process frame if the current index matches or exceeds the next frame to process
+                if frame_index >= next_frame_to_process:
                     try:
                         frame = frame.to_ndarray(format=self.format)
                         height, width, _ = frame.shape
@@ -41,12 +44,17 @@ class PyAVProducer:
                             frame = cv2.resize(frame, (self.width, self.height))
 
                         yield frame
+                        next_frame_to_process += (
+                            frame_interval  # Update the next frame index to process
+                        )
                     except Exception as e:
-                        break
+                        logger.error(f"Error processing frame: {e}")
+                        raise e
 
                 frame_index += 1
 
         except av.AVError as e:
+            logger.error(f"Failed to open {path}: {e}")
             raise ValueError(f"Failed to open {path}: {e}")
 
         container.close()

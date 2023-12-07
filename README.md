@@ -4,7 +4,7 @@
    <strong>English</strong> | <a href="./README.zh.md">简体中文</a>
 </p>
 
-Stream Infer is a Python library designed for stream inference in video processing applications. It contains modular components for video frame generation, inference algorithms, and result export.
+Stream Infer is a Python library designed for stream inference in video processing applications. It includes modular components for video frame generation, inference algorithms, and result export.
 
 ## Installation
 
@@ -14,22 +14,27 @@ pip install stream-infer
 
 ## Quick Start
 
-Here is a simple example of Stream Infer to help you get started.
+Below is a simple example of Stream Infer to help you get started and understand what Stream Infer does.
 
-This example uses an open-source vertical detection model from [ModelScope](https://modelscope.cn/models/damo/cv_tinynas_head-detection_damoyolo/summary) for head detection.
+This example uses an open-source vertical detection model from [ModelScope](https://modelscope.cn/models/damo/cv_tinynas_head-detection_damoyolo/summary) for detecting heads.
+
+> You may need to install additional packages via pip to use this example:
+> `pip install modelscope matplotlib thop timm easydict`
 
 ```python
-from stream_infer import Inference, FrameTracker, TrackerManager, Player
+from stream_infer import Inference, Dispatcher, DispatcherManager, Player
 from stream_infer.algo import BaseAlgo
-from stream_infer.collector import BaseCollector
 from stream_infer.producer import PyAVProducer, OpenCVProducer
 from stream_infer.log import logger
 
-import time
 import cv2
-
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
+
+INFER_FRAME_WIDTH = 1920
+INFER_FRAME_HEIGHT = 1080
+PLAY_FPS = 30
+OFFLINE = True
 
 
 class HeadDetectionAlgo(BaseAlgo):
@@ -40,92 +45,98 @@ class HeadDetectionAlgo(BaseAlgo):
         )
 
     def run(self, frames):
-        logger.debug(f"{self.name} starts inferring {len(frames)} frames")
-        result = self.head_detection(frames[0])
-        logger.debug(f"{self.name} inference completed: {result}")
-        return result
+        logger.debug(f"{self.name} starts running with {len(frames)} frames")
+        try:
+            result = self.head_detection(frames[0])
+            logger.debug(f"{self.name} inference finished: {result}")
+            return result
+        except Exception as e:
+            logger.error(e)
+            return None
 
 
-class Collector(BaseCollector):
-    def get(self, name):
-        if self.results.get(name):
-            return self.results[name]
+class SelfDispatcher(Dispatcher):
+    def get_result(self, name):
+        if self.collect_results.get(name):
+            return self.collect_results[name]
         return None
 
-    def get_last(self, name):
-        algo_results = self.get(name)
+    def get_last_result(self, name):
+        algo_results = self.get_result(name)
         if algo_results is not None and len(algo_results.keys()) > 0:
             return algo_results[(str(max([int(k) for k in algo_results.keys()])))]
         return None
 
 
-INFER_FRAME_WIDTH = 1920
-INFER_FRAME_HEIGHT = 1080
-OFFLINE = True
+def draw_boxes(frame, data):
+    for box, label in zip(data["boxes"], data["labels"]):
+        start_point = (int(box[0]), int(box[1]))
+        end_point = (int(box[2]), int(box[3]))
+        color = (255, 0, 0)
+        thickness = 2
+        cv2.rectangle(frame, start_point, end_point, color, thickness)
 
-video = "/path/to/your/video.mp4"
-fps = 30
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        org = (start_point[0], start_point[1] - 10)
+        font_scale = 0.5
+        font_color = (0, 255, 0)
+        line_type = 2
+        cv2.putText(frame, label, org, font, font_scale, font_color, line_type)
 
-# producer = PyAVProducer(INFER_FRAME_WIDTH, INFER_FRAME_HEIGHT)
-producer = OpenCVProducer(INFER_FRAME_WIDTH, INFER_FRAME_HEIGHT)
-collector = Collector()
 
 if __name__ == "__main__":
-    max_size = 300
-    frame_tracker = (
-        FrameTracker(max_size) if OFFLINE else TrackerManager().create(max_size)
+    producer = OpenCVProducer(INFER_FRAME_WIDTH, INFER_FRAME_HEIGHT)
+    video_path = "/path/to/your/video.mp4"
+    max_size = 150
+    dispatcher = (
+        SelfDispatcher(max_size)
+        if OFFLINE
+        else DispatcherManager(SelfDispatcher).create(max_size)
     )
 
-    inference = Inference(frame_tracker, collector)
-    inference.load_algo(HeadDetectionAlgo(), frame_count=1, frame_step=fps, interval=1)
+    inference = Inference(dispatcher)
+    inference.load_algo(
+        HeadDetectionAlgo(), frame_count=1, frame_step=PLAY_FPS, interval=1
+    )
 
-    player = Player(producer, frame_tracker, video)
+    player = Player(dispatcher, producer, path=video_path)
     if OFFLINE:
-        for frame, current_frame in player.play(fps):
-            inference.auto_run_specific_inference(player.fps, current_frame)
-            data = collector.get_last("HeadDetectionAlgo")
+        for frame, current_frame in player.play(PLAY_FPS):
+            current_algo_name = inference.auto_run_specific(
+                player.play_fps, current_frame
+            )
+            # 其它操作，比如绘制结果窗口
+            data = dispatcher.get_last_result(HeadDetectionAlgo.__name__)
             if data is None:
                 continue
 
-            if data is not None:
-                # draw results
-                for box, label in zip(data["boxes"], data["labels"]):
-                    start_point = (int(box[0]), int(box[1]))
-                    end_point = (int(box[2]), int(box[3]))
-                    color = (255, 0, 0)
-                    thickness = 2
-                    cv2.rectangle(frame, start_point, end_point, color, thickness)
-
-                    font = cv2.FONT_HERSHEY_SIMPLEX
-                    org = (start_point[0], start_point[1] - 10)
-                    font_scale = 0.5
-                    font_color = (0, 255, 0)
-                    line_type = 2
-                    cv2.putText(frame, label, org, font, font_scale, font_color, line_type)
+            draw_boxes(frame, data)
             cv2.namedWindow("Inference", cv2.WINDOW_NORMAL)
-            cv2.imshow(f"Inference", frame)
+            cv2.imshow("Inference", frame)
             cv2.waitKey(1)
+        cv2.destroyAllWindows()
     else:
-        player.play_realtime(fps)
+        player.play_async(PLAY_FPS)
+        inference.run_async()
         while player.is_active():
-            inference.run_inference()
-
-    cv2.destroyAllWindows()
+            pass
+        inference.stop()
+        player.stop()
 ```
 
 ## Features and Concepts
 
-### Real-Time Inference
+### Real-time Inference
 
-![Timing](./docs/img/real-time.png)
+![Sequence](./docs/img/real-time.png)
 
-Real-time inference refers to inputting a video or stream, which is played at normal real-time speed, adding frames to the frame track. The playback process is independent of the inference process. Since inference always takes some time, it causes varying degrees of result delay but does not create memory leaks or accumulation.
+Real-time inference refers to inputting a video or stream, which plays at the normal real-time playback speed, adding frames to the track. The playback and inference processes are independent. Due to the time taken by inference, it results in varying delays, but with a reasonable frame rate set, it will not cause memory leaks or accumulation.
 
-Real-time inference is more commonly applied to streaming media analysis such as RTMP/RTSP/HLS:
+Real-time inference is more commonly applied in scenarios such as:
 
 - Various live broadcast scenarios
 - Real-time monitoring
-- Real-time conferences
+- Real-time meetings
 - Clinical surgeries
 - ...
 
@@ -137,29 +148,29 @@ Real-time inference is more commonly applied to streaming media analysis such as
 
 **Poor Processing Performance**
 
-![](./docs/img/offline_bad.png)
+![](./docs/img/offline_poor.png)
 
-Offline inference means inputting a video (streams are not applicable here) and performing inference in parallel with frame fetching at the speed the current computer can handle. Depending on the machine's performance, the total process time may be longer or shorter than the video duration.
+Offline inference refers to inputting a video (streams are not applicable here) and performing inference in parallel with frame fetching at the speed the computer can handle. Depending on machine performance, the total runtime may be longer or shorter than the video duration.
 
-Offline inference is applied to **all non-real-time necessary situations** for video structured analysis, such as:
+Offline inference is applied in **all non-real-time necessary** video structure analysis, such as:
 
 - Post-meeting video analysis
 - Surgical video replay
 - ...
 
-**Also, since offline inference's video reading and algorithm inference run in series, it can be used to test algorithm performance and effects (as shown in Quick Start, using cv2 to display post-inference video and algorithm data), while real-time inference is not suitable for the algorithm development stage.**
+**Also, since the video reading and algorithm inference in offline inference run in sequence, it can be used to test algorithm performance and effects (as in the [Quick Start](#quick-start), displaying the video and algorithm data after inference through cv2), while real-time inference is not suitable for the algorithm development stage.**
 
 ## Modules
 
 ![Flowchart](./docs/img/flow.svg)
 
-### Step1. BaseAlgo
+### BaseAlgo
 
-We simply encapsulate all algorithms into classes with `init()` and `run()` functions, which is BaseAlgo.
+We simply encapsulate all algorithms into classes with two functions: `init()` and `run()`, which is BaseAlgo.
 
-Even though Stream Infer provides a framework about stream inference, the actual algorithms still need to be written by yourself, and after writing, inherit the BaseAlgo class for unified encapsulation and calling.
+Even though Stream Infer provides a framework about stream inference, **the actual algorithm functionality still needs to be written by you**. After writing, inherit the BaseAlgo class for unified encapsulation and calling.
 
-For example, if you have completed a head detection algorithm and the inference call method is:
+For example, you have completed a head detection algorithm, and the inference call is:
 
 ```python
 # https://modelscope.cn/models/damo/cv_tinynas_head-detection_damoyolo/summary
@@ -174,7 +185,7 @@ result = head_detection(input_location)
 print("result is : ", result)
 ```
 
-Then, to stream infer this algorithm in videos and streaming media, encapsulate it like this:
+Then, to perform stream inference of this algorithm in videos and streaming media, encapsulate it like this:
 
 ```python
 from stream_infer.algo import BaseAlgo
@@ -188,49 +199,28 @@ class HeadDetectionAlgo(BaseAlgo):
         return self.head_detection(frames)
 ```
 
-This way, you have completed the encapsulation and will be able to call it normally in the future.
+In this way, you have completed the encapsulation and will be able to call it normally in the future.
 
-### Step2. Collector
+### Dispatcher
 
-Collector is used to collect inference results, easily collecting data such as algorithm names, results, and times.
+Dispatcher serves as the central service linking playback and inference, caching inference frames, distributing inference frames, and collecting inference time and result data.
 
-Currently, only BaseCollector is implemented in Collector. More such as RedisCollector, TDEngineCollector, MySQLCollector, etc., will soon be developed.
+Dispatcher provides functions for adding/getting frames, adding/getting inference results and times. You don't need to worry about others, but to be able to get the results and print them conveniently, store them in other locations, you need to focus on the `collect_result()` function.
 
-Here is the simple source code for BaseCollector and an implementation called PrintCollector:
+Here is their source code implementation:
 
 ```python
-class BaseCollector:
-    def __init__(self):
-        self.results = {}
-
-    def collect(self, inference_result):
-        if inference_result is not None:
-            time = inference_result[0]
-            name = inference_result[1]
-            data = inference_result[2]
-            self.results[name][time] = data
-
-    def get(self, *args, **kwargs):
-        raise NotImplementedError
-
-    def aggregate(self):
-        raise NotImplementedError
-
-    def clear(self):
-        self.results.clear()
-
-
-class PrintCollector(BaseCollector):
-    def get(self, name):
-        if self.results.get(name):
-            return self.results[name]
-        return None
-
-    def get_all(self):
-        return self.results
+def collect_result(self, inference_result):
+    if inference_result is not None:
+        time = str(inference_result[0])
+        name = inference_result[1]
+        data = inference_result[2]
+        if self.collect_results.get(name) is None:
+            self.collect_results[name] = {}
+        self.collect_results[name][time] = data
 ```
 
-You can get the results of a specific algorithm name using `collector.get(algo_instance.name)` or print all inference results using `collector.get_all()`. Without rewriting the `collect()` method, the format of `get_all()` return is roughly as follows:
+The format of the collected `collect_results` is roughly as follows:
 
 ```json
 {
@@ -245,103 +235,142 @@ You can get the results of a specific algorithm name using `collector.get(algo_i
 }
 ```
 
-### Step3. Producer
-
-Producer loads videos or streaming media in different ways, such as PyAV, OpenCV, ImageIO (only for offline), etc., and adjusts or converts frames' width, height, color space, etc., finally returning each frame as a numpy array.
-
-Instantiating a Producer often requires inputting the frame width and height required for inference and the color order. The default color order is the same as the BGR order returned by `cv2.imread()`.
+On this basis, if you want to request the result to a REST service, or do other operations on the existing data before requesting, it can be achieved by **inheriting the Dispatcher class** and rewriting the function:
 
 ```python
-from stream_infer.producer import PyAVProducer
+from stream_infer import Dispatcher, DispatcherManager
+import requests
+...
+class SelfDispatcher(Dispatcher):
+    def __init__(self, max_size: int = 120):
+        super().__init__(max_size)
+        self.sess = requests.Session()
+        ...
+
+    def collect_result(self, inference_result):
+        super().__init__(inference_result)
+        req_data = {
+            "time" = inference_result[0]
+            "name" = inference_result[1]
+            "data" = inference_result[2]
+        }
+        self.sess.post("http://xxx.com/result/", json=req_data)
+...
+
+# 离线环境下
+dispatcher = SelfDispatcher()
+
+# 实时环境下
+dispatcher = DispatcherManager(SelfDispatcher).create(max_size=150)
+```
+
+> You may have noticed that the way to instantiate the dispatcher is different in offline and real-time environments. This is because **in real-time environments, playback and inference are not in the same process**. Both need to share the same dispatcher, so DispatcherManager proxy is used.
+
+### Producer
+
+Producer loads videos or streaming media in different ways, such as PyAV, OpenCV, ImageIO (only applicable offline), etc., and adjusts or transforms the width
+
+, height, and color space of the frames, finally returning each frame as a numpy array.
+
+Instantiating a Producer often requires inputting the frame width and height needed for inference and the color order. The default color order is the same as the BGR order returned by `cv2.imread()`.
+
+```python
+from stream_infer.producer import PyAVProducer, OpenCVProducer
 
 producer = PyAVProducer(1920, 1080)
+producer = OpenCVProducer(1920, 1080)
 ```
 
-### Step4. FrameTracker
+### Inference
 
-FrameTracker can be understood as a frame track, supporting caching the most recent frames into a queue, with a configurable queue `max_size` (default is 120 frames).
+Inference is the core of the framework, implementing functions such as loading algorithms and running inference.
 
-At the same time, FrameTracker also takes on the responsibility of obtaining the current playback time based on fps and the current frame.
-
-It should be noted that real-time and offline are two different operating modes. In real-time operation, the producer and inference are not in the same process and belong to a multi-process environment. Both producer and inference need to access the same FrameTracker object. Therefore, when you need to run stream inference in real-time, you need to create a FrameTracker object through TrackerManager, rather than instantiating it directly through FrameTracker.
-
-```python
-from stream_infer import FrameTracker, TrackerManager
-
-# In an offline environment
-frame_tracker = FrameTracker()
-
-# In a real-time environment
-frame_tracker = TrackerManager().create(max_size=150)
-```
-
-### Step5. Inference
-
-Inference is the core of this framework, implementing functions such as loading algorithms and running inference.
-
-An Inference object requires a FrameTracker object (for fetching frames) and a Collector object (for collecting).
+An Inference object needs to input a Dispatcher object for frame fetching and sending inference results, etc.
 
 ```python
 from stream_infer import Inference
 
-inference = Inference(frame_tracker, collector)
+inference = Inference(dispatcher)
 ```
 
-When you need to load an algorithm, here is an example using the one from Step1:
+When you need to load an algorithm, here is an example using the [BaseAlgo](#basealgo) above:
 
 ```python
 from anywhere_algo import HeadDetectionAlgo, AnyOtherAlgo
 
 ...
 
-inference = Inference(frame_tracker, collector)
+inference = Inference(dispatcher)
 inference.load_algo(HeadDetectionAlgo("head"), frame_count=1, frame_step=fps, interval=1)
 inference.load_algo(AnyOtherAlgo("other"), 5, 6, 60)
 ```
 
-Among them, we can specify a name for HeadDetectionAlgo to identify the running algorithm name (needed when Collector collects and to avoid duplication), and pay attention to the parameters:
+The parameters for loading the algorithm are the core features of the framework, allowing you to freely implement the frame fetching logic:
 
-- frame_count: The number of frames the algorithm needs to obtain, which is the number of frames finally received in the run() function.
-- frame_step: Indicates that 1 frame is taken every `frame_step`, with a total of `frame_count` frames taken. If this parameter is filled with fps, it means taking the last `frame_count` frames every second.
-- interval: The frequency of algorithm calls, like the above `AnyOtherAlgo`, which will only be called once a minute.
+- frame_count: The number of frames the algorithm needs to fetch, which is the number of frames finally received in the run() function.
+- frame_step: Fetch 1 frame every `frame_step`, a total of `frame_count` frames. If this parameter is filled with fps, it means fetching the last `frame_count` frames per second.
+- interval: In seconds, it represents the frequency of algorithm calls, such as `AnyOtherAlgo` will only be called once a minute, saving resources when it is not necessary to call it.
 
-### Step6. Player & run
+### Player
 
-Player inputs producer, frame_tracker, and video/stream media address for playback and inference.
-
-A Player requires the above parameters.
+Player inputs dispatcher, producer, and video/streaming media address for playback and inference.
 
 ```python
 from stream_infer import Player
-player = Player(producer, frame_tracker, video)
+
+player = Player(dispatcher, producer, video_path)
 ```
 
-Having loaded the algorithm, and with a collector, frame track, and player, you can start running inference.
-
-#### Real-Time Operation
+Player has two functions to execute in offline and real-time inference modes, respectively:
 
 ```python
-player.play_realtime(fps)
-while player.is_active():
-    print(player.get_current_time_str())
-    self.run_inference()
-    print(collector.get_all())
-    # Other action
+player.play(fps=None)
+player.play_async(fps=None)
 ```
 
-#### Offline Operation
+Both functions can input an fps parameter, which represents the playback frame rate here. **If the frame rate of the video source is higher than this number, frames will be skipped to force playback at this specified frame rate.** This can also save performance to some extent.
+
+### Play & Run
+
+#### Offline Running
+
+Player's `play()` returns an iterable object, and calling `inference.auto_run_specific()` in the loop will automatically determine which algorithm to run based on the current frame index:
 
 ```python
-for _, current_frame in player.play(fps):
-    current_algo_name = self.auto_run_specific_inference(player.fps, current_frame)
-    if current_algo_name:
-        print(collector.get(current_algo_name))
-    # Other action
-    cv2.imshow('frame', frame)
-    cv2.waitKey(1)
-
-cv2.destroyAllWindows()
+if __name__ == "__main__":
+    ...
+    for frame, current_frame in player.play(PLAY_FPS):
+        current_algo_name = inference.auto_run_specific(
+            player.play_fps, current_frame
+        )
+        # 其它操作，比如绘制画面窗口
+        cv2.namedWindow("Inference", cv2.WINDOW_NORMAL)
+        cv2.imshow("Inference", frame)
+        cv2.waitKey(1)
+    cv2.destroyAllWindows()
 ```
+
+As described in [Offline Inference](#offline-inference), all the executions above are synchronized in one process and one thread, so you can take your time to complete the operations you want, such as algorithm effect verification (as in the [Quick Start](#quick-start), getting the inference result and displaying boxes to the window, etc.), even if it is stuttered due to synchronous operation, everything is accurate.
+
+#### Real-time Running
+
+Just run Player's `play_async()` and Inference's `run_async()`:
+
+> It is particularly important to note that we recommend not exceeding 30 frames per second for the playback frame rate when running in real-time. Firstly, a high frame rate does not help much with the accuracy of analysis results. Secondly, it will lead to memory leaks and frame accumulation.
+
+```python
+if __name__ == "__main__":
+    ...
+    player.play_async(PLAY_FPS)
+    inference.run_async()
+    while player.is_active():
+        pass
+        # 其它操作
+    inference.stop()
+    player.stop()
+```
+
+Monitor the playback status with `player.is_active()`, and manually end the inference thread and playback process after playback is complete.
 
 ## License
 

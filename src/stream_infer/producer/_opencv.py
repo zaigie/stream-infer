@@ -1,5 +1,7 @@
 import cv2
 
+from ..log import logger
+
 
 class OpenCVProducer:
     def __init__(self, width: int, height: int, cvt_code=None):
@@ -25,19 +27,20 @@ class OpenCVProducer:
 
         original_fps = cap.get(cv2.CAP_PROP_FPS)
 
-        # Calculate the frame skip rate if fps is set and original_fps is higher
-        skip_rate = 1
+        # Calculate the frame skip interval as a float if fps is set and original_fps is higher
+        frame_interval = 1.0
         if fps is not None and original_fps > fps:
-            skip_rate = int(original_fps // fps)
+            frame_interval = original_fps / fps
 
         frame_index = 0
+        next_frame_to_process = 0
         while True:
             ret, frame = cap.read()
             if not ret:
                 break
 
-            # Skip frames based on the calculated skip rate
-            if frame_index % skip_rate == 0:
+            # Process frame if the current index matches or exceeds the next frame to process
+            if frame_index >= next_frame_to_process:
                 try:
                     height, width, _ = frame.shape
                     if width != self.width or height != self.height:
@@ -47,8 +50,12 @@ class OpenCVProducer:
                         frame = cv2.cvtColor(frame, self.cvt_code)
 
                     yield frame
+                    next_frame_to_process += (
+                        frame_interval  # Update the next frame index to process
+                    )
                 except Exception as e:
-                    break
+                    logger.error(f"Error processing frame: {e}")
+                    raise e
 
             frame_index += 1
 
