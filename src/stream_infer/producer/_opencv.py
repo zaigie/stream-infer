@@ -2,7 +2,7 @@ import cv2
 
 
 class OpenCVProducer:
-    def __init__(self, width: int, height: int, cvt_code: int = cv2.COLOR_RGB2BGR):
+    def __init__(self, width: int, height: int, cvt_code=None):
         self.width = width
         self.height = height
         self.cvt_code = cvt_code
@@ -39,11 +39,13 @@ class OpenCVProducer:
             # Skip frames based on the calculated skip rate
             if frame_index % skip_rate == 0:
                 try:
-                    height, width, channel = frame.shape
+                    height, width, _ = frame.shape
                     if width != self.width or height != self.height:
                         frame = cv2.resize(frame, (self.width, self.height))
 
-                    frame = cv2.cvtColor(frame, self.cvt_code)
+                    if self.cvt_code is not None:
+                        frame = cv2.cvtColor(frame, self.cvt_code)
+
                     yield frame
                 except Exception as e:
                     break

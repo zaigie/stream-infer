@@ -3,7 +3,7 @@ import cv2
 
 
 class PyAVProducer:
-    def __init__(self, width: int, height: int, format: str = "rgb24"):
+    def __init__(self, width: int, height: int, format: str = "bgr24"):
         self.width = width
         self.height = height
         self.format = format
@@ -36,7 +36,7 @@ class PyAVProducer:
                 if frame_index % skip_rate == 0:
                     try:
                         frame = frame.to_ndarray(format=self.format)
-                        height, width, channel = frame.shape
+                        height, width, _ = frame.shape
                         if width != self.width or height != self.height:
                             frame = cv2.resize(frame, (self.width, self.height))
 
