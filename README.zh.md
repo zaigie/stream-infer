@@ -55,7 +55,7 @@ class Collector(BaseCollector):
     def get_last(self, name):
         algo_results = self.get(name)
         if algo_results is not None and len(algo_results.keys()) > 0:
-            return algo_results[max(algo_results.keys())]
+            return algo_results[(str(max([int(k) for k in algo_results.keys()])))]
         return None
 
 
