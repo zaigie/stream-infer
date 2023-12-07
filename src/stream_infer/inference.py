@@ -2,9 +2,9 @@ from .timer import Timer
 
 
 class Inference:
-    def __init__(self, frame_tracker, exporter=None):
+    def __init__(self, frame_tracker, collector=None):
         self.frame_tracker = frame_tracker
-        self.exporter = exporter
+        self.collector = collector
         self.inferences_info = []
         self.timers = {}
 
@@ -37,10 +37,11 @@ class Inference:
         # end_time = time.time()
         # elapsed_time = end_time - start_time
 
-    def auto_run_specific_inference(self, fps, current_frame):
+    def auto_run_specific_inference(self, fps, current_frame) -> str:
         for algo_instance, _, _, frequency in self.inferences_info:
             if current_frame % int(frequency * fps) == 0:
                 self.run_specific_inference(algo_instance.name)
+                return algo_instance.name
 
     def run_specific_inference(self, algo_name):
         for inference_info in self.inferences_info:
@@ -58,8 +59,8 @@ class Inference:
         if not frames:
             return -1
         result = algo_instance.run(frames)
-        if self.exporter:
-            self.exporter.collect(
+        if self.collector:
+            self.collector.collect(
                 (self.frame_tracker.get_current_time(), algo_instance.name, result)
             )
         return result

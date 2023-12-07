@@ -14,53 +14,103 @@ pip install stream-infer
 
 ## 快速开始
 
-以下是一个 Stream Infer 的简单示例，以帮助您开始使用：
+以下是一个 Stream Infer 的简单示例，以帮助您开始使用
+
+该示例用了 [ModelScope](https://modelscope.cn/models/damo/cv_tinynas_head-detection_damoyolo/summary) 上的一个开源垂类检测模型，用于检测人头。
 
 ```python
 from stream_infer import Inference, FrameTracker, TrackerManager, Player
 from stream_infer.algo import BaseAlgo
-from stream_infer.exporter import BaseExporter
-from stream_infer.producer import PyAVProducer
+from stream_infer.collector import BaseCollector
+from stream_infer.producer import PyAVProducer, OpenCVProducer
 from stream_infer.log import logger
 
 import time
+import cv2
 
-class ExampleAlgo(BaseAlgo):
+from modelscope.pipelines import pipeline
+from modelscope.utils.constant import Tasks
+
+
+class HeadDetectionAlgo(BaseAlgo):
     def init(self):
-        logger.info(f"{self.name} 已初始化")
+        self.model_id = "damo/cv_tinynas_head-detection_damoyolo"
+        self.head_detection = pipeline(
+            Tasks.domain_specific_object_detection, model=self.model_id
+        )
 
     def run(self, frames):
         logger.debug(f"{self.name} 开始推理 {len(frames)} 帧")
-        time.sleep(0.3)
-        result = {"name": self.name}
+        result = self.head_detection(frames[0])
         logger.debug(f"{self.name} 推理完成: {result}")
         return result
 
-class Exporter(BaseExporter):
-    def send(self):
-        if len(self.results) == 0:
-            return
-        logger.debug(self.results[-1])
+
+class Collector(BaseCollector):
+    def get(self, name):
+        if self.results.get(name):
+            return self.results[name]
+        return None
+
+    def get_last(self, name):
+        algo_results = self.get(name)
+        if algo_results is not None and len(algo_results.keys()) > 0:
+            return algo_results[max(algo_results.keys())]
+        return None
+
 
 INFER_FRAME_WIDTH = 1920
 INFER_FRAME_HEIGHT = 1080
-OFFLINE = False
+OFFLINE = True
 
 video = "/path/to/your/video.mp4"
-play_fps = 30
+fps = 30
 
-producer = PyAVProducer(INFER_FRAME_WIDTH, INFER_FRAME_HEIGHT)
-exporter = Exporter()
+# producer = PyAVProducer(INFER_FRAME_WIDTH, INFER_FRAME_HEIGHT)
+producer = OpenCVProducer(INFER_FRAME_WIDTH, INFER_FRAME_HEIGHT)
+collector = Collector()
 
 if __name__ == "__main__":
-    frame_tracker = FrameTracker() if OFFLINE else TrackerManager().create()
+    max_size = 300
+    frame_tracker = (
+        FrameTracker(max_size) if OFFLINE else TrackerManager().create(max_size)
+    )
 
-    inference = Inference(frame_tracker, exporter)
-    inference.load_algo(ExampleAlgo(), frame_count=1, frame_step=play_fps, interval=1)
-    inference.load_algo(ExampleAlgo("emotion"), 5, 6, 60)
+    inference = Inference(frame_tracker, collector)
+    inference.load_algo(HeadDetectionAlgo(), frame_count=1, frame_step=fps, interval=1)
 
     player = Player(producer, frame_tracker, video)
-    inference.start(player, fps=play_fps, is_offline=OFFLINE)
+    if OFFLINE:
+        for frame, current_frame in player.play(fps):
+            inference.auto_run_specific_inference(player.fps, current_frame)
+            data = collector.get_last("HeadDetectionAlgo")
+            if data is None:
+                continue
+
+            if data is not None:
+                # 绘制检测结果
+                for box, label in zip(data["boxes"], data["labels"]):
+                    start_point = (int(box[0]), int(box[1]))
+                    end_point = (int(box[2]), int(box[3]))
+                    color = (255, 0, 0)
+                    thickness = 2
+                    cv2.rectangle(frame, start_point, end_point, color, thickness)
+
+                    font = cv2.FONT_HERSHEY_SIMPLEX
+                    org = (start_point[0], start_point[1] - 10)
+                    font_scale = 0.5
+                    font_color = (0, 255, 0)
+                    line_type = 2
+                    cv2.putText(frame, label, org, font, font_scale, font_color, line_type)
+            cv2.namedWindow("推理", cv2.WINDOW_NORMAL)
+            cv2.imshow(f"推理", frame)
+            cv2.waitKey(1)
+    else:
+        player.play_realtime(fps)
+        while player.is_active():
+            inference.run_inference()
+
+    cv2.destroyAllWindows()
 ```
 
 ## 功能与概念
@@ -69,7 +119,15 @@ if __name__ == "__main__":
 
 ![时序](./docs/img/real-time.png)
 
-实时推理是指输入一个视频或流，视频或流以正常的现实时间播放速度进行播放，并添加帧到帧轨道中，播放进程与推理进程独立，由于推理无论如何都会花费一定时间，所以会产生或大或小的结果延迟，但不会造成内存泄漏和堆积。
+实时推理是指输入一个视频或流，视频或流以正常的现实时间播放速度进行播放，并添加帧到帧轨道中，播放进程与推理进程独立，由于推理无论如何都会花费一定时间，造成或大或小的结果延迟，但不会制造内存泄漏和堆积。
+
+实时推理更常应用于 RTMP/RTSP/HLS 等流媒体的分析：
+
+- 各类直播场景
+- 实时监控
+- 实时会议
+- 临床手术
+- ...
 
 ### 离线推理
 
@@ -82,6 +140,14 @@ if __name__ == "__main__":
 ![](./docs/img/offline_bad.png)
 
 离线推理是指输入一个视频（这里不能输入流了），以当前计算机能处理的速度，在取帧的同时串行执行推理，取帧与推理交错，由于推理无论如何都会花费一定时间，根据机器性能，整个进程的运行时间可能大于也可能小于视频时长。
+
+离线推理应用于**所有非必须实时情况下**的视频结构化分析，如：
+
+- 会后视频分析
+- 手术视频复盘
+- ...
+
+**同时，由于离线推理的视频读取与算法推理是串行运行的，因此可以用于测试算法性能与效果（如快速开始中，通过 cv2 展示推理后的视频与算法数据），而实时推理则不适合算法开发阶段使用**
 
 ## 模块
 
@@ -124,48 +190,66 @@ class HeadDetectionAlgo(BaseAlgo):
 
 这样，你就完成了封装，并在以后能够正常调用它。
 
-### Step2. Exporter
+### Step2. Collector
 
-Exporter 用来收集推理结果，可以轻松地收集算法名称、结果、时间等数据。
+Collector 用来收集推理结果，可以轻松地收集算法名称、结果、时间等数据。
 
-目前 Exporter 只实现了 BaseExporter，更多的如 RedisExporter、TDEngineExporter、MySQLExporter 等等将会很快开发好。
+目前 Collector 只实现了 BaseCollector，更多的如 RedisCollector、TDEngineCollector、MySQLCollector 等等将会很快开发好。
 
-以下是 BaseExporter 的简单源码和一个名为 PrintExporter 的实现：
+以下是 BaseCollector 的简单源码和一个名为 PrintCollector 的实现：
 
 ```python
-class BaseExporter:
+class BaseCollector:
     def __init__(self):
-        self.results = []
+        self.results = {}
 
     def collect(self, inference_result):
         if inference_result is not None:
-            self.results.append(inference_result)
+            time = inference_result[0]
+            name = inference_result[1]
+            data = inference_result[2]
+            self.results[name][time] = data
 
-    def send(self, *args, **kwargs):
+    def get(self, *args, **kwargs):
         raise NotImplementedError
 
-    def send_all(self):
-        for result in self.results:
-            self.send(result)
+    def aggregate(self):
+        raise NotImplementedError
 
     def clear(self):
         self.results.clear()
 
 
-class PrintExporter(BaseExporter):
-    def send(self):
-        if len(self.results) == 0:
-            return
-        print(self.results[-1])
+class PrintCollector(BaseCollector):
+    def get(self, name):
+        if self.results.get(name):
+            return self.results[name]
+        return None
+
+    def get_all(self):
+        return self.results
 ```
 
-打印后，你会得到最后一个推理结果，`inference_result` 的结构是 `(current_time, algo_instance.name, result)`
+你可以通过 `collector.get(algo_instance.name)` 获取指定算法名称的结果，也可以通过 `collector.get_all()` 打印所有推理结果，在不重写 `collect()` 方法的情况下，`get_all()` 返回的格式大致如下：
+
+```json
+{
+  "HeadDetectionAlgo": {
+    "1": { "scores": [], "boxes": [] },
+    "2": { "scores": [], "boxes": [] }
+  },
+  "other": {
+    "60": { "a": 1 },
+    "120": { "a": 2 }
+  }
+}
+```
 
 ### Step3. Producer
 
-Producer 通过不同方式，如 PyAV、FFmpeg、ImageIO 等，加载视频或流媒体，并从对帧的宽高、色彩空间等进行调整或转化，最终将每一帧返回为 numpy 数组。
+Producer 通过不同方式，如 PyAV、OpenCV、ImageIO（仅适用于离线） 等，加载视频或流媒体，并从对帧的宽高、色彩空间等进行调整或转化，最终将每一帧返回为 numpy 数组。
 
-实例化一个 Producer 往往需要输入推理需要的帧宽高和色彩空间，色彩默认为 BGR24
+实例化一个 Producer 往往需要输入推理需要的帧宽高和色彩顺序，默认的色彩顺序与 `cv2.imread()` 返回的 BGR 顺序相同。
 
 ```python
 from stream_infer.producer import PyAVProducer
@@ -195,11 +279,12 @@ frame_tracker = TrackerManager().create(max_size=150)
 
 Inference 是本框架的核心，加载算法、运行推理等功能都由它实现。
 
-一个 Inference 对象须要输入 FrameTracker 对象（取帧）和 Exporter 对象（收集）
+一个 Inference 对象须要输入 FrameTracker 对象（取帧）和 Collector 对象（收集）
 
 ```python
 from stream_infer import Inference
-inference = Inference(frame_tracker, exporter)
+
+inference = Inference(frame_tracker, collector)
 ```
 
 当你需要加载算法时，这里以 Step1 中的例子举例
@@ -209,12 +294,12 @@ from anywhere_algo import HeadDetectionAlgo, AnyOtherAlgo
 
 ...
 
-inference = Inference(frame_tracker, exporter)
+inference = Inference(frame_tracker, collector)
 inference.load_algo(HeadDetectionAlgo("head"), frame_count=1, frame_step=fps, interval=1)
 inference.load_algo(AnyOtherAlgo("other"), 5, 6, 60)
 ```
 
-其中，我们可以为 HeadDetectionAlgo 指定一个 name，用于标识运行的算法名称（在 Exporter 收集的时候需要且避免重复），同时注意一下参数：
+其中，我们可以为 HeadDetectionAlgo 指定一个 name，用于标识运行的算法名称（在 Collector 收集的时候需要且避免重复），同时注意一下参数：
 
 - frame_count：算法需要获取的帧数量，也就是最终 run() 函数中收到的 frames 数量。
 - frame_step：表示每隔 `frame_step` 取 1 帧，共取 `frame_count` 帧，如果该参数填入 fps，那么就意味着每秒取最后的 `frame_count` 帧。
@@ -233,31 +318,6 @@ player = Player(producer, frame_tracker, video)
 
 加载好了算法、有了收集器和帧轨道以及播放器，就可以开始运行推理了
 
-事实上，一般**不在**实际生产开发中执行 Quick Start 里最后运行推理的代码：
-
-```python
-# ！！！不要在实际生产开发中用
-inference.start(player, fps=play_fps, is_offline=OFFLINE)
-```
-
-它将离线和实时两个运行方式做了合并，但这是不太正确的，因为我们往往需要在运行过程中 debug 或者处理其它任务，让我们看看 `start()` 函数的源码
-
-```python
-def start(self, player, fps: int = None, is_offline: bool = False):
-    """
-    Easy to use function to start inference with realtime mode.
-    """
-    if is_offline:
-        for _, current_frame in player.play(fps):
-            self.auto_run_specific_inference(player.fps, current_frame)
-    else:
-        player.play_realtime(fps)
-        while player.is_active():
-            self.run_inference()
-```
-
-从中可以很简单地抽出，实时运行和离线运行下的关键函数
-
 #### 实时运行
 
 ```python
@@ -265,7 +325,7 @@ player.play_realtime(fps)
 while player.is_active():
     print(player.get_current_time_str())
     self.run_inference()
-    print(exporter.send())
+    print(collector.get_all())
     # Other action
 ```
 
@@ -273,9 +333,14 @@ while player.is_active():
 
 ```python
 for _, current_frame in player.play(fps):
-    self.auto_run_specific_inference(player.fps, current_frame)
-    print(exporter.send())
+    current_algo_name = self.auto_run_specific_inference(player.fps, current_frame)
+    if current_algo_name:
+        print(collector.get(current_algo_name))
     # Other action
+    cv2.imshow('frame', frame)
+    cv2.waitKey(1)
+
+cv2.destroyAllWindows()
 ```
 
 ## 许可证
