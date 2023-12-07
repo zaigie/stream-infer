@@ -105,7 +105,7 @@ if __name__ == "__main__":
             current_algo_name = inference.auto_run_specific(
                 player.play_fps, current_frame
             )
-            # 其它操作，比如绘制结果窗口
+            # Other operations, such as drawing the result window
             data = dispatcher.get_last_result(HeadDetectionAlgo.__name__)
             if data is None:
                 continue
@@ -257,10 +257,10 @@ class SelfDispatcher(Dispatcher):
         self.sess.post("http://xxx.com/result/", json=req_data)
 ...
 
-# 离线环境下
+# In Offline
 dispatcher = SelfDispatcher()
 
-# 实时环境下
+# In Real-Time
 dispatcher = DispatcherManager(SelfDispatcher).create(max_size=150)
 ```
 
@@ -268,9 +268,7 @@ dispatcher = DispatcherManager(SelfDispatcher).create(max_size=150)
 
 ### Producer
 
-Producer loads videos or streaming media in different ways, such as PyAV, OpenCV, ImageIO (only applicable offline), etc., and adjusts or transforms the width
-
-, height, and color space of the frames, finally returning each frame as a numpy array.
+Producer loads videos or streaming media in different ways, such as PyAV, OpenCV, ImageIO (only applicable offline), etc., and adjusts or transforms the width, height, and color space of the frames, finally returning each frame as a numpy array.
 
 Instantiating a Producer often requires inputting the frame width and height needed for inference and the color order. The default color order is the same as the BGR order returned by `cv2.imread()`.
 
@@ -343,7 +341,7 @@ if __name__ == "__main__":
         current_algo_name = inference.auto_run_specific(
             player.play_fps, current_frame
         )
-        # 其它操作，比如绘制画面窗口
+        # Other operations, such as drawing the picture window
         cv2.namedWindow("Inference", cv2.WINDOW_NORMAL)
         cv2.imshow("Inference", frame)
         cv2.waitKey(1)
@@ -365,7 +363,7 @@ if __name__ == "__main__":
     inference.run_async()
     while player.is_active():
         pass
-        # 其它操作
+        # Other operations
     inference.stop()
     player.stop()
 ```
