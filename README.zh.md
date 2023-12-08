@@ -16,10 +16,15 @@ pip install stream-infer
 
 以下是一个 Stream Infer 的简单示例，以帮助您直接开始使用并了解 Stream Infer 做了什么工作
 
-该示例用了 [ModelScope](https://modelscope.cn/models/damo/cv_tinynas_head-detection_damoyolo/summary) 上的一个开源垂类检测模型，用于检测人头。
+该示例用了 YOLOv8 的姿态模型进行检测并绘制结果到 cv2 窗口中
+
+https://github.com/zaigie/stream_infer/assets/17232619/32aef0c9-89c7-4bc8-9dd6-25035bee2074
+
+视频文件在 [sample-videos](https://github.com/intel-iot-devkit/sample-videos)
 
 > 您可能需要额外通过 pip 工具安装其它包来使用这个示例：
-> `pip install modelscope matplotlib thop timm easydict`
+>
+> `pip install ultralytics`
 
 ```python
 from stream_infer import Inference, Dispatcher, DispatcherManager, Player
@@ -28,8 +33,11 @@ from stream_infer.producer import PyAVProducer, OpenCVProducer
 from stream_infer.log import logger
 
 import cv2
-from modelscope.pipelines import pipeline
-from modelscope.utils.constant import Tasks
+import os
+
+os.environ["YOLO_VERBOSE"] = str(False)
+
+from ultralytics import YOLO
 
 INFER_FRAME_WIDTH = 1920
 INFER_FRAME_HEIGHT = 1080
@@ -37,19 +45,16 @@ PLAY_FPS = 30
 OFFLINE = True
 
 
-class HeadDetectionAlgo(BaseAlgo):
+class PoseDectionAlgo(BaseAlgo):
     def init(self):
-        self.model_id = "damo/cv_tinynas_head-detection_damoyolo"
-        self.head_detection = pipeline(
-            Tasks.domain_specific_object_detection, model=self.model_id
-        )
+        self.model = YOLO("yolov8n-pose.pt")
 
     def run(self, frames):
-        logger.debug(f"{self.name} starts running with {len(frames)} frames")
+        # logger.debug(f"{self.name} starts running with {len(frames)} frames")
         try:
-            result = self.head_detection(frames[0])
-            logger.debug(f"{self.name} inference finished: {result}")
-            return result
+            result = self.model(frames[0])
+            # logger.debug(f"{self.name} inference finished: {result[0]}")
+            return result[0]
         except Exception as e:
             logger.error(e)
             return None
@@ -69,24 +74,29 @@ class SelfDispatcher(Dispatcher):
 
 
 def draw_boxes(frame, data):
-    for box, label in zip(data["boxes"], data["labels"]):
-        start_point = (int(box[0]), int(box[1]))
-        end_point = (int(box[2]), int(box[3]))
-        color = (255, 0, 0)
-        thickness = 2
-        cv2.rectangle(frame, start_point, end_point, color, thickness)
+    names = data.names
+    boxes = data.boxes
+    keypoints = data.keypoints
+    for i in range(len(boxes)):
+        box = boxes[i]
+        name = names[box.cls[0].int().item()]
+        x1, y1, x2, y2 = box.xyxy[0]
+        x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
+        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+        cv2.putText(
+            frame, name, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2
+        )
 
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        org = (start_point[0], start_point[1] - 10)
-        font_scale = 0.5
-        font_color = (0, 255, 0)
-        line_type = 2
-        cv2.putText(frame, label, org, font, font_scale, font_color, line_type)
+    for person in keypoints.data:
+        for kp in person:
+            x, y, conf = kp
+            if conf > 0.5:
+                cv2.circle(frame, (int(x), int(y)), 5, (0, 0, 255), -1)
 
 
 if __name__ == "__main__":
     producer = OpenCVProducer(INFER_FRAME_WIDTH, INFER_FRAME_HEIGHT)
-    video_path = "/path/to/your/video.mp4"
+    video_path = "./classroom.mp4"
     max_size = 150
     dispatcher = (
         SelfDispatcher(max_size)
@@ -95,9 +105,7 @@ if __name__ == "__main__":
     )
 
     inference = Inference(dispatcher)
-    inference.load_algo(
-        HeadDetectionAlgo(), frame_count=1, frame_step=PLAY_FPS, interval=1
-    )
+    inference.load_algo(PoseDectionAlgo(), frame_count=1, frame_step=1, interval=0.1)
 
     player = Player(dispatcher, producer, path=video_path)
     if OFFLINE:
@@ -106,7 +114,7 @@ if __name__ == "__main__":
                 player.play_fps, current_frame
             )
             # 其它操作，比如绘制结果窗口
-            data = dispatcher.get_last_result(HeadDetectionAlgo.__name__)
+            data = dispatcher.get_last_result(PoseDectionAlgo.__name__)
             if data is None:
                 continue
 
