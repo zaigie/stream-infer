@@ -9,7 +9,7 @@ Stream Infer 是一个为视频处理应用中的流式推理设计的 Python �
 ## 安装
 
 ```bash
-pip install stream-infer
+pip install -U stream-infer
 ```
 
 ## 快速开始
@@ -18,16 +18,19 @@ pip install stream-infer
 
 该示例用了 YOLOv8 的姿态模型进行检测并绘制结果到 cv2 窗口中
 
+> 由于 Python 多线程的问题，实时推理下暂时没法展示到窗口
+
 https://github.com/zaigie/stream_infer/assets/17232619/32aef0c9-89c7-4bc8-9dd6-25035bee2074
 
 视频文件在 [sample-videos](https://github.com/intel-iot-devkit/sample-videos)
 
 > 您可能需要额外通过 pip 工具安装其它包来使用这个示例：
 >
-> `pip install ultralytics`
+> `pip install ultralytics supervision`
 
 ```python
-from stream_infer import Inference, Dispatcher, DispatcherManager, Player
+from stream_infer import Inference, Player
+from stream_infer.dispatcher import DevelopDispatcher, DispatcherManager
 from stream_infer.algo import BaseAlgo
 from stream_infer.producer import PyAVProducer, OpenCVProducer
 from stream_infer.log import logger
@@ -38,6 +41,7 @@ import os
 os.environ["YOLO_VERBOSE"] = str(False)
 
 from ultralytics import YOLO
+import supervision as sv
 
 INFER_FRAME_WIDTH = 1920
 INFER_FRAME_HEIGHT = 1080
@@ -45,9 +49,9 @@ PLAY_FPS = 30
 OFFLINE = True
 
 
-class PoseDectionAlgo(BaseAlgo):
+class YoloDectionAlgo(BaseAlgo):
     def init(self):
-        self.model = YOLO("yolov8n-pose.pt")
+        self.model = YOLO("yolov8n.pt")
 
     def run(self, frames):
         # logger.debug(f"{self.name} starts running with {len(frames)} frames")
@@ -60,66 +64,43 @@ class PoseDectionAlgo(BaseAlgo):
             return None
 
 
-class SelfDispatcher(Dispatcher):
-    def get_result(self, name):
-        if self.collect_results.get(name):
-            return self.collect_results[name]
-        return None
-
-    def get_last_result(self, name):
-        algo_results = self.get_result(name)
-        if algo_results is not None and len(algo_results.keys()) > 0:
-            return algo_results[(str(max([int(k) for k in algo_results.keys()])))]
-        return None
-
-
-def draw_boxes(frame, data):
-    names = data.names
-    boxes = data.boxes
-    keypoints = data.keypoints
-    for i in range(len(boxes)):
-        box = boxes[i]
-        name = names[box.cls[0].int().item()]
-        x1, y1, x2, y2 = box.xyxy[0]
-        x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
-        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-        cv2.putText(
-            frame, name, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2
-        )
-
-    for person in keypoints.data:
-        for kp in person:
-            x, y, conf = kp
-            if conf > 0.5:
-                cv2.circle(frame, (int(x), int(y)), 5, (0, 0, 255), -1)
+def annotate(frame, data):
+    detections = sv.Detections.from_ultralytics(data)
+    boundingbox_annotator = sv.BoundingBoxAnnotator()
+    label_annotator = sv.LabelAnnotator()
+    labels = [data.names[class_id] for class_id in detections.class_id]
+    annotated_image = boundingbox_annotator.annotate(scene=frame, detections=detections)
+    annotated_image = label_annotator.annotate(
+        scene=annotated_image, detections=detections, labels=labels
+    )
+    return annotated_image
 
 
 if __name__ == "__main__":
     producer = OpenCVProducer(INFER_FRAME_WIDTH, INFER_FRAME_HEIGHT)
     video_path = "./classroom.mp4"
-    max_size = 150
-    dispatcher = (
-        SelfDispatcher(max_size)
-        if OFFLINE
-        else DispatcherManager(SelfDispatcher).create(max_size)
-    )
 
+    dispatcher = (
+        DevelopDispatcher()
+        if OFFLINE
+        else DispatcherManager(DevelopDispatcher).create()
+    )
     inference = Inference(dispatcher)
-    inference.load_algo(PoseDectionAlgo(), frame_count=1, frame_step=1, interval=0.1)
+    inference.load_algo(YoloDectionAlgo(), frame_count=1, frame_step=1, interval=0.1)
 
     player = Player(dispatcher, producer, path=video_path)
+
     if OFFLINE:
-        for frame, current_frame in player.play(PLAY_FPS):
+        cv2.namedWindow("Inference", cv2.WINDOW_NORMAL)
+        for frame, current_frame in player.play(PLAY_FPS, position=0):
             current_algo_name = inference.auto_run_specific(
                 player.play_fps, current_frame
             )
-            # 其它操作，比如绘制结果窗口
-            data = dispatcher.get_last_result(PoseDectionAlgo.__name__)
+            _, data = dispatcher.get_last_result(YoloDectionAlgo.__name__, clear=False)
             if data is None:
                 continue
 
-            draw_boxes(frame, data)
-            cv2.namedWindow("Inference", cv2.WINDOW_NORMAL)
+            frame = annotate(frame, data)
             cv2.imshow("Inference", frame)
             cv2.waitKey(1)
         cv2.destroyAllWindows()
@@ -127,9 +108,15 @@ if __name__ == "__main__":
         player.play_async(PLAY_FPS)
         inference.run_async()
         while player.is_active():
-            pass
+            current_time, data = dispatcher.get_last_result(
+                YoloDectionAlgo.__name__, clear=True
+            )
+            if data is None:
+                continue
+            logger.debug(f"{current_time} result: {data}")
         inference.stop()
         player.stop()
+    dispatcher.clear()
 ```
 
 ## 功能与概念
@@ -246,7 +233,7 @@ def collect_result(self, inference_result):
 在此基础上，若您想要将结果请求到 REST 服务，或者在请求前对现有数据做其它操作，都可以通过**继承 Dispatcher 类**并重写函数的方式实现：
 
 ```python
-from stream_infer import Dispatcher, DispatcherManager
+from stream_infer.dispatcher import Dispatcher, DispatcherManager
 import requests
 ...
 class SelfDispatcher(Dispatcher):
@@ -332,11 +319,13 @@ player = Player(dispatcher, producer, video_path)
 Player 有两个函数分别在实时与离线推理模式下执行
 
 ```python
-player.play(fps=None)
+player.play(fps=None, position=0)
 player.play_async(fps=None)
 ```
 
 两个函数都可以输入一个 fps 参数，这里表示的是播放时的帧率，**如果视频源的帧率大于这个数，将会由跳帧逻辑进行跳帧，强行播放这个指定的帧率**。这样也能一定程度上节省性能。
+
+而在离线环境下，你还可以指定播放的位置，position 参数将接收一个以秒为单位的参数。
 
 ### Play & Run
 

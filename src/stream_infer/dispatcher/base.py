@@ -32,6 +32,9 @@ class Dispatcher:
                 self.collect_results[name] = {}
             self.collect_results[name][time] = data
 
+    def clear_collect_results(self):
+        self.collect_results.clear()
+
     def clear(self):
         self.queue.clear()
         self.collect_results.clear()
@@ -44,8 +47,14 @@ class Dispatcher:
     def get_current_time(self) -> int:
         return self.current_time
 
+    def set_current_time(self, time):
+        self.current_time = time
+
     def get_current_frame(self) -> int:
         return self.current_frame
+
+    def set_current_frame(self, frame):
+        self.current_frame = frame
 
 
 class DispatcherManager:
