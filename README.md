@@ -196,6 +196,13 @@ class HeadDetectionAlgo(BaseAlgo):
 
 In this way, you have completed the encapsulation and will be able to call it normally in the future.
 
+> [!CAUTION]
+> In many cases, we use CUDA or MPS to accelerate inference, but please note that when you use either of these accelerations:
+>
+> **No Tensors should be returned** in the ` run()` function of `BaseAlgo` you inherit from! Please try to manually convert them into standard Python data formats, such as dictionaries.
+>
+> This is due to the multi-process environment, and it may also be because my learning is not deep enough. If there are better solutions, I will try to resolve them.
+
 ### Dispatcher
 
 Dispatcher serves as the central service linking playback and inference, caching inference frames, distributing inference frames, and collecting inference time and result data.
