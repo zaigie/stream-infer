@@ -10,7 +10,7 @@ class PyAVProducer:
         self.height = height
         self.format = "bgr24" if format is None else format
 
-    def read(self, path, fps=None):
+    def read(self, path, fps=None, position=0):
         """
         Reads frames from a video file/stream_url/v4l2 device.
         Optionally skips frames to meet the specified fps.
@@ -18,6 +18,7 @@ class PyAVProducer:
         Args:
             path (str): The path to the video file/stream_url/v4l2 device.
             fps (int, optional): Target frames per second. If None, no frame skipping is done.
+            position (int, optional): The position in seconds from where to start reading the video.
 
         Yields:
             numpy.ndarray: frame
@@ -27,15 +28,20 @@ class PyAVProducer:
             video_stream = next(s for s in container.streams if s.type == "video")
             original_fps = video_stream.base_rate
 
-            # Calculate the frame skip interval as a float if fps is set and original_fps is higher
+            # Seek to the specified position
+            if position > 0:
+                logger.warning(
+                    "Using PyAVProducer and specifying position is not recommended because there is not yet a good solution to the problem of startup delays but it still works"
+                )
+                start_frame = int(position * original_fps)
+
             frame_interval = 1.0
             if fps is not None and original_fps > fps:
                 frame_interval = original_fps / fps
 
             frame_index = 0
-            next_frame_to_process = 0
+            next_frame_to_process = start_frame if position > 0 else frame_index
             for frame in container.decode(video=0):
-                # Process frame if the current index matches or exceeds the next frame to process
                 if frame_index >= next_frame_to_process:
                     try:
                         frame = frame.to_ndarray(format=self.format)
@@ -44,9 +50,7 @@ class PyAVProducer:
                             frame = cv2.resize(frame, (self.width, self.height))
 
                         yield frame
-                        next_frame_to_process += (
-                            frame_interval  # Update the next frame index to process
-                        )
+                        next_frame_to_process += frame_interval
                     except Exception as e:
                         logger.error(f"Error processing frame: {e}")
                         raise e

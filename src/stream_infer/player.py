@@ -21,12 +21,16 @@ class Player:
         self.process = None
         self.is_end = mp.Value("b", False)
 
-    def play(self, fps=None):
+    def play(self, fps=None, position=0):
         fps = self.fps if fps is None else fps
         self.play_fps = fps
         interval_count = 0
 
-        for idx, frame in enumerate(self.producer.read(self.path, fps)):
+        if position > 0:
+            self.dispatcher.set_current_time(position)
+            self.dispatcher.set_current_frame(fps * position)
+
+        for idx, frame in enumerate(self.producer.read(self.path, fps, position)):
             self.dispatcher.add_frame(frame)
             interval_count += 1
             if interval_count >= fps:

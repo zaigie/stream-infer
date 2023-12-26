@@ -9,7 +9,7 @@ class OpenCVProducer:
         self.height = height
         self.cvt_code = cvt_code
 
-    def read(self, path, fps=None):
+    def read(self, path, fps=None, position=0):
         """
         Reads frames from a video file/stream_url/v4l2 device.
         Optionally skips frames to meet the specified fps.
@@ -17,6 +17,7 @@ class OpenCVProducer:
         Args:
             path (str): The path to the video file/stream_url/v4l2 device.
             fps (int, optional): Target frames per second. If None, no frame skipping is done.
+            position (int, optional): The position in seconds from where to start reading the video.
 
         Yields:
             numpy.ndarray: frame
@@ -27,19 +28,21 @@ class OpenCVProducer:
 
         original_fps = cap.get(cv2.CAP_PROP_FPS)
 
-        # Calculate the frame skip interval as a float if fps is set and original_fps is higher
+        # Skip to the requested second
+        if position > 0:
+            cap.set(cv2.CAP_PROP_POS_MSEC, position * 1000)  # position in milliseconds
+
         frame_interval = 1.0
         if fps is not None and original_fps > fps:
             frame_interval = original_fps / fps
 
-        frame_index = 0
-        next_frame_to_process = 0
+        frame_index = int(original_fps * position)
+        next_frame_to_process = frame_index
         while True:
             ret, frame = cap.read()
             if not ret:
                 break
 
-            # Process frame if the current index matches or exceeds the next frame to process
             if frame_index >= next_frame_to_process:
                 try:
                     height, width, _ = frame.shape
@@ -50,9 +53,7 @@ class OpenCVProducer:
                         frame = cv2.cvtColor(frame, self.cvt_code)
 
                     yield frame
-                    next_frame_to_process += (
-                        frame_interval  # Update the next frame index to process
-                    )
+                    next_frame_to_process += frame_interval
                 except Exception as e:
                     logger.error(f"Error processing frame: {e}")
                     raise e
