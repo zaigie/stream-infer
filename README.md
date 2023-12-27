@@ -201,6 +201,8 @@ In this way, you have completed the encapsulation and will be able to call it no
 >
 > **No Tensors should be returned** in the ` run()` function of `BaseAlgo` you inherit from! Please try to manually convert them into standard Python data formats, such as dictionaries.
 >
+> Or copy the tensor (to the CPU) and share it across multiple processes.
+>
 > This is due to the multi-process environment, and it may also be because my learning is not deep enough. If there are better solutions, I will try to resolve them.
 
 ### Dispatcher

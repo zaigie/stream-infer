@@ -201,6 +201,8 @@ class HeadDetectionAlgo(BaseAlgo):
 >
 > 在继承 `BaseAlgo` 的 `run()` 函数中**返回值不能有任何张量**！请尽量手动转化为标准的 Python 数据格式，如 dict 等。
 >
+> 或者将张量复制（到 CPU）再进行多进程之间的共享。
+>
 > 这是因为多进程环境中造成的，也可能是我学习地不够深入，如果有更好的解决办法我会尝试去解决。
 
 ### Dispatcher
