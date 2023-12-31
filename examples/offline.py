@@ -13,7 +13,7 @@ from ultralytics import YOLO
 
 INFER_FRAME_WIDTH = 1920
 INFER_FRAME_HEIGHT = 1080
-PLAY_FPS = 30
+FPS = 30
 
 
 class YoloDectionAlgo(BaseAlgo):
@@ -55,14 +55,16 @@ def offline_progress(inference: Inference, *args, **kwargs):
 
 
 if __name__ == "__main__":
-    producer = OpenCVProducer(INFER_FRAME_WIDTH, INFER_FRAME_HEIGHT)
-    video_path = "./classroom.mp4"
     dispatcher = DevelopDispatcher()
-    player = Player(dispatcher, producer, path=video_path)
+    player = Player(
+        dispatcher,
+        OpenCVProducer(INFER_FRAME_WIDTH, INFER_FRAME_HEIGHT),
+        path="./classroom.mp4",
+    )
 
     inference = Inference(dispatcher)
     inference.load_algo(YoloDectionAlgo(), frame_count=1, frame_step=1, interval=0.1)
     inference.set_custom_progress(offline_progress)
     cv2.namedWindow("Inference", cv2.WINDOW_NORMAL)
-    inference.start(player, fps=PLAY_FPS, position=0)
+    inference.start(player, fps=FPS, position=0)
     cv2.destroyAllWindows()

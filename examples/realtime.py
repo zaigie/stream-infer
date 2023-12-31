@@ -13,7 +13,7 @@ from ultralytics import YOLO
 
 INFER_FRAME_WIDTH = 1920
 INFER_FRAME_HEIGHT = 1080
-PLAY_FPS = 30
+FPS = 30
 
 
 class YoloDectionAlgo(BaseAlgo):
@@ -38,12 +38,14 @@ def realtime_progress(inference: Inference, *args, **kwargs):
 
 
 if __name__ == "__main__":
-    producer = OpenCVProducer(INFER_FRAME_WIDTH, INFER_FRAME_HEIGHT)
-    video_path = "./classroom.mp4"
     dispatcher = DispatcherManager(DevelopDispatcher).create()
-    player = Player(dispatcher, producer, path=video_path)
+    player = Player(
+        dispatcher,
+        OpenCVProducer(INFER_FRAME_WIDTH, INFER_FRAME_HEIGHT),
+        path="./classroom.mp4",
+    )
 
     inference = Inference(dispatcher)
-    inference.load_algo(YoloDectionAlgo(), frame_count=1, frame_step=30, interval=1)
+    inference.load_algo(YoloDectionAlgo(), frame_count=1, frame_step=FPS, interval=1)
     inference.set_custom_progress(realtime_progress)
-    inference.start(player, fps=PLAY_FPS, position=0, offline=False)
+    inference.start(player, fps=FPS, offline=False)
