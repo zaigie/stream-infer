@@ -26,6 +26,8 @@ pip install ultralytics opencv-python
 
 ### 快速可视化开发&调试
 
+https://github.com/zaigie/stream_infer/assets/17232619/6cbd6858-0292-4759-8d4c-ace154567f8e
+
 通过 [streamlit](https://github.com/streamlit/streamlit) 实现的可视化 web 应用。
 
 该模式主要用于本地/远程服务器上的算法开发和调试，支持自定义帧上绘制和数据展示组件。
@@ -257,10 +259,6 @@ inference.start(player, fps=fps, position=0, offline=True)
 需要特别提到的是，在推理过程中，您可能需要对帧或推理结果进行处理，我们提供了 `set_custom_progress()` 函数方便您完成这个目的。
 
 关于具体的使用您可以分别参考 [examples/offline.py](https://github.com/zaigie/stream_infer/blob/main/examples/offline.py) 和 [examples/realtime.py](https://github.com/zaigie/stream_infer/blob/main/examples/realtime.py) 的示例代码。
-
-### Streamlit Service App
-
-提供了一个基于 streamlit 的 web 应用，便于开发和调试，同时可自定义帧绘制处理和展示组件函数，具体使用请参考 [examples/server.py](https://github.com/zaigie/stream_infer/blob/main/examples/server.py) 。
 
 ## 许可证
 

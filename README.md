@@ -26,6 +26,8 @@ The video files used in the examples are available at [sample-videos](https://gi
 
 ### Rapid Visualization Development & Debugging
 
+https://github.com/zaigie/stream_infer/assets/17232619/6cbd6858-0292-4759-8d4c-ace154567f8e
+
 Implemented through a visual web application using [streamlit](https://github.com/streamlit/streamlit).
 
 This mode is primarily used for algorithm development and debugging on local/remote servers, supporting custom frame drawing and data display components.
@@ -257,10 +259,6 @@ inference.start(player, fps=fps, position=0, offline=True)
 It is worth mentioning that during the inference process, you may need to process the frames or inference results. We provide the `set_custom_progress()` function to facilitate this purpose.
 
 For specific usage, you can refer to the example codes in [examples/offline.py](https://github.com/zaigie/stream_infer/blob/main/examples/offline.py) and [examples/realtime.py](https://github.com/zaigie/stream_infer/blob/main/examples/realtime.py).
-
-### Streamlit Service App
-
-A web application based on streamlit is provided for development and debugging purposes. It also allows customization of frame rendering processing and display component functions. For specific usage, please refer to [examples/server.py](https://github.com/zaigie/stream_infer/blob/main/examples/server.py).
 
 ## License
 
