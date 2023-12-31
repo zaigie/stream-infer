@@ -18,7 +18,7 @@ pip install -U stream-infer
 
 All examples depend on YOLOv8 and opencv-python, and additional packages may be required for these examples:
 
-```
+```bash
 pip install ultralytics opencv-python
 ```
 
@@ -33,6 +33,10 @@ Implemented through a visual web application using [streamlit](https://github.co
 This mode is primarily used for algorithm development and debugging on local/remote servers, supporting custom frame drawing and data display components.
 
 View and run the demo here: [examples/server.py](https://github.com/zaigie/stream_infer/blob/main/examples/server.py)
+
+```bash
+streamlit run server.py
+```
 
 ### Offline Inference
 

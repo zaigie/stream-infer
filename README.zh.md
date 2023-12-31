@@ -18,7 +18,7 @@ pip install -U stream-infer
 
 所有示例依赖 YOLOv8 和 opencv-python，您可能需要额外通过 pip 工具安装其它包来使用这个示例：
 
-```
+```bash
 pip install ultralytics opencv-python
 ```
 
@@ -33,6 +33,10 @@ https://github.com/zaigie/stream_infer/assets/17232619/6cbd6858-0292-4759-8d4c-a
 该模式主要用于本地/远程服务器上的算法开发和调试，支持自定义帧上绘制和数据展示组件。
 
 在这里查看及运行 demo：[examples/server.py](https://github.com/zaigie/stream_infer/blob/main/examples/server.py)
+
+```bash
+streamlit run server.py
+```
 
 ### 离线推理
 
