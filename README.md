@@ -24,7 +24,7 @@ pip install ultralytics opencv-python
 
 The video files used in the examples are available at [sample-videos](https://github.com/intel-iot-devkit/sample-videos)
 
-### Rapid Visualization Development & Debugging
+### Visualization Development & Debugging
 
 https://github.com/zaigie/stream_infer/assets/17232619/6cbd6858-0292-4759-8d4c-ace154567f8e
 
