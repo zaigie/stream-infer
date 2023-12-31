@@ -3,6 +3,7 @@ import streamlit as st
 from .inference import Inference
 from .player import Player
 from .producer import OpenCVProducer
+from .util import trans_position2time
 from .log import logger
 
 
@@ -18,6 +19,8 @@ class StreamInferApp:
         if self.need_save:
             if not os.path.exists(save_output_path):
                 os.makedirs(save_output_path)
+        self.annotate_frame_func = self.default_annotate_frame
+        self.output_func = self.default_output
 
     def setup_output_ui(self):
         if not self.show_output:
@@ -25,8 +28,7 @@ class StreamInferApp:
         self.output_widgets = {}
         algos = self.inference.list_algos()
         for idx, tab in enumerate(st.tabs(algos)):
-            self.output_widgets[algos[idx]] = tab
-            tab.empty()
+            self.output_widgets[algos[idx]] = tab.empty()
 
     def setup_ui(self):
         st.set_page_config(
@@ -134,14 +136,13 @@ class StreamInferApp:
     def run_inference(self, clear: bool = False):
         producer = OpenCVProducer(self.width, self.height)
         player = Player(self.inference.dispatcher, producer, path=self.video_path)
+
         video_info = player.info
         if video_info["frame_count"] < 0:
             st.error("不能加载实时流")
             return
         total_sec = int(video_info["frame_count"] / video_info["fps"])
-        total_sec_display = (
-            f"{total_sec // 3600:02d}:{total_sec // 60 % 60:02d}:{total_sec % 60:02d}"
-        )
+        total_sec_display = trans_position2time(total_sec)
         self.video_progress.progress(0, text=f"00:00:00 / {total_sec_display}")
         temp_current_time = 0
 
@@ -152,7 +153,7 @@ class StreamInferApp:
                 temp_current_time = self.inference.dispatcher.get_current_time()
                 self.video_progress.progress(
                     temp_current_time / total_sec,
-                    text=f"{player.get_play_time()} / {total_sec_display}",
+                    text=f"{trans_position2time(temp_current_time)} / {total_sec_display}",
                 )
 
             current_algo_names = self.inference.auto_run_specific(
@@ -163,7 +164,7 @@ class StreamInferApp:
                     _, data = self.inference.dispatcher.get_last_result(algo)
                     if data is None:
                         continue
-                    frame = self.annotate_frame(algo, data, frame)
+                    frame = self.annotate_frame_func(algo, data, frame)
             if len(current_algo_names) == 0:
                 yield None, -1, None, frame
             else:
@@ -176,6 +177,7 @@ class StreamInferApp:
                     else:
                         display_frame = frame
                     yield current_algo_name, position, data, display_frame
+
         if self.need_save:
             self.save_output()
         self.stop_infer()
@@ -185,11 +187,23 @@ class StreamInferApp:
         else:
             st.stop()
 
-    def annotate_frame(self, name, data, frame):
+    def default_annotate_frame(self, name, data, frame):
         return frame
 
-    def output(self, name, position, data):
+    def set_annotate_frame(self, func):
+        def custom_annotate_frame_wrapper(name, data, frame):
+            return func(self, name, data, frame)
+
+        self.annotate_frame_func = custom_annotate_frame_wrapper
+
+    def default_output(self, name, position, data):
         self.output_widgets[name].text(f"{position}: {data}")
+
+    def set_output(self, func):
+        def custom_output_wrapper(name, position, data):
+            return func(self, name, position, data)
+
+        self.output_func = custom_output_wrapper
 
     def start(self):
         if self.get_state("mode") != "infering":
@@ -199,4 +213,4 @@ class StreamInferApp:
             if self.show_frame and frame is not None:
                 self.image_frame.image(frame, channels=self.color_channel)
             if self.show_output and current_algo_name:
-                self.output(current_algo_name, position, data)
+                self.output_func(current_algo_name, position, data)

@@ -1,5 +1,7 @@
 import threading as th
+import cv2
 
+from .player import Player
 from .timer import Timer
 from .log import logger
 
@@ -10,6 +12,7 @@ class Inference:
         self.inferences_info = []
         self.timers = {}
         self.is_stop = False
+        self.progress_func = self.default_progress
 
     def load_algo(self, algo_instance, frame_count, frame_step, interval):
         self.inferences_info.append((algo_instance, frame_count, frame_step, interval))
@@ -65,3 +68,32 @@ class Inference:
             (self.dispatcher.get_current_time(), algo_instance.name, result)
         )
         return result
+
+    def default_progress(self, *args, **kwargs):
+        pass
+
+    def set_custom_progress(self, func):
+        def custom_progress_wrapper(*args, **kwargs):
+            return func(self, *args, **kwargs)
+
+        self.progress_func = custom_progress_wrapper
+
+    def start(
+        self,
+        player: Player,
+        fps: int = 30,
+        position: int = 0,
+        offline: bool = True,
+    ):
+        if offline:
+            for frame, current_frame in player.play(fps, position):
+                self.auto_run_specific(fps, current_frame)
+                self.progress_func(frame=frame)
+        else:
+            player.play_async(fps)
+            self.run_async()
+            while player.is_active():
+                self.progress_func()
+            self.stop()
+            player.stop()
+        self.dispatcher.clear()

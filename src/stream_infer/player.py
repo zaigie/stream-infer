@@ -3,6 +3,7 @@ import multiprocessing as mp
 from multiprocessing.managers import BaseProxy
 
 from .timer import Timer
+from .util import trans_position2time
 from .log import logger
 
 
@@ -51,7 +52,7 @@ class Player:
                 f"Dispatcher is not an proxy: {type(self.dispatcher)}, use DispatcherManager().create() to create one"
             )
 
-        self.rt_frames = mp.Queue()
+        # self.rt_frames = mp.Queue()
         if fps is None or fps >= self.fps:
             fps = self.fps
             if fps > 30:
@@ -83,8 +84,7 @@ class Player:
         )
 
     def get_play_time(self) -> str:
-        current_time = self.dispatcher.get_current_time()
-        return f"{current_time // 3600:02d}:{current_time // 60 % 60:02d}:{current_time % 60:02d}"
+        return trans_position2time(self.dispatcher.get_current_time())
 
     def video_stream(self):
         """
@@ -98,7 +98,7 @@ class Player:
             target_time = start_time + (idx * base_interval)
             time.sleep(max(0, target_time - time.time()))
             self.dispatcher.add_frame(frame)
-            self.rt_frames.put(frame)
+            # self.rt_frames.put(frame)
             interval_count += 1
             if interval_count >= self.play_fps:
                 interval_count = 0
@@ -117,6 +117,6 @@ class Player:
                 self.dispatcher.increase_current_time()
                 logger.debug(f"current time: {self.get_play_time()}")
             self.dispatcher.add_frame(frame)
-            self.rt_frames.put(frame)
+            # self.rt_frames.put(frame)
 
         self.is_end.value = True
