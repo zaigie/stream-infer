@@ -260,7 +260,7 @@ inference.start(player, fps=fps, position=0, offline=True)
 - position: Accepts a parameter in seconds, which can specify the start position for inference (only available in offline inference; how could you specify a position in real-time inference, right?).
 - offline: Whether it is offline inference. Set to False if you wish to run real-time inference.
 
-It is worth mentioning that during the inference process, you may need to process the frames or inference results. We provide the `set_custom_progress()` function to facilitate this purpose.
+It is worth mentioning that during the inference process, you may need to process the frames or inference results. We provide the `set_custom_process()` function to facilitate this purpose.
 
 For specific usage, you can refer to the example codes in [examples/offline.py](https://github.com/zaigie/stream_infer/blob/main/examples/offline.py) and [examples/realtime.py](https://github.com/zaigie/stream_infer/blob/main/examples/realtime.py).
 

@@ -260,7 +260,7 @@ inference.start(player, fps=fps, position=0, offline=True)
 - position：接收一个以秒为单位的参数，可以指定开始推理的位置（仅离线推理下可用，实时推理怎么可能指定位置呢对吧？）。
 - offline：是否为离线推理，当你想运行实时推理，设置为 False 即可。
 
-需要特别提到的是，在推理过程中，您可能需要对帧或推理结果进行处理，我们提供了 `set_custom_progress()` 函数方便您完成这个目的。
+需要特别提到的是，在推理过程中，您可能需要对帧或推理结果进行处理，我们提供了 `set_custom_process()` 函数方便您完成这个目的。
 
 关于具体的使用您可以分别参考 [examples/offline.py](https://github.com/zaigie/stream_infer/blob/main/examples/offline.py) 和 [examples/realtime.py](https://github.com/zaigie/stream_infer/blob/main/examples/realtime.py) 的示例代码。
 

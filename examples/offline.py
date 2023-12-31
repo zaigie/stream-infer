@@ -43,7 +43,7 @@ def draw_boxes(frame, data):
         )
 
 
-def offline_progress(inference: Inference, *args, **kwargs):
+def offline_process(inference: Inference, *args, **kwargs):
     frame = kwargs.get("frame")
     _, data = inference.dispatcher.get_last_result(
         YoloDectionAlgo.__name__, clear=False
@@ -64,7 +64,7 @@ if __name__ == "__main__":
 
     inference = Inference(dispatcher)
     inference.load_algo(YoloDectionAlgo(), frame_count=1, frame_step=1, interval=0.1)
-    inference.set_custom_progress(offline_progress)
+    inference.set_custom_process(offline_process)
     cv2.namedWindow("Inference", cv2.WINDOW_NORMAL)
     inference.start(player, fps=FPS, position=0)
     cv2.destroyAllWindows()

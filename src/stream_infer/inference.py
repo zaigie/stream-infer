@@ -12,7 +12,7 @@ class Inference:
         self.inferences_info = []
         self.timers = {}
         self.is_stop = False
-        self.progress_func = self.default_progress
+        self.process_func = self.default_process
 
     def load_algo(self, algo_instance, frame_count, frame_step, interval):
         self.inferences_info.append((algo_instance, frame_count, frame_step, interval))
@@ -69,14 +69,14 @@ class Inference:
         )
         return result
 
-    def default_progress(self, *args, **kwargs):
+    def default_process(self, *args, **kwargs):
         pass
 
-    def set_custom_progress(self, func):
-        def custom_progress_wrapper(*args, **kwargs):
+    def set_custom_process(self, func):
+        def custom_process_wrapper(*args, **kwargs):
             return func(self, *args, **kwargs)
 
-        self.progress_func = custom_progress_wrapper
+        self.process_func = custom_process_wrapper
 
     def start(
         self,
@@ -88,12 +88,12 @@ class Inference:
         if offline:
             for frame, current_frame in player.play(fps, position):
                 self.auto_run_specific(fps, current_frame)
-                self.progress_func(frame=frame)
+                self.process_func(frame=frame)
         else:
             player.play_async(fps)
             self.run_async()
             while player.is_active():
-                self.progress_func()
+                self.process_func()
             self.stop()
             player.stop()
         self.dispatcher.clear()

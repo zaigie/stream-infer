@@ -29,7 +29,7 @@ class YoloDectionAlgo(BaseAlgo):
             return None
 
 
-def realtime_progress(inference: Inference, *args, **kwargs):
+def realtime_process(inference: Inference, *args, **kwargs):
     current_time, data = inference.dispatcher.get_last_result(
         YoloDectionAlgo.__name__, clear=True
     )
@@ -47,5 +47,5 @@ if __name__ == "__main__":
 
     inference = Inference(dispatcher)
     inference.load_algo(YoloDectionAlgo(), frame_count=1, frame_step=FPS, interval=1)
-    inference.set_custom_progress(realtime_progress)
+    inference.set_custom_process(realtime_process)
     inference.start(player, fps=FPS, offline=False)
