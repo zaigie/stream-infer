@@ -93,9 +93,7 @@ if __name__ == "__main__":
     if OFFLINE:
         cv2.namedWindow("Inference", cv2.WINDOW_NORMAL)
         for frame, current_frame in player.play(PLAY_FPS, position=0):
-            current_algo_name = inference.auto_run_specific(
-                player.play_fps, current_frame
-            )
+            inference.auto_run_specific(player.play_fps, current_frame)
             _, data = dispatcher.get_last_result(YoloDectionAlgo.__name__, clear=False)
             if data is None:
                 continue
@@ -355,6 +353,93 @@ if __name__ == "__main__":
 ```
 
 As described in [Offline Inference](#offline-inference), all the executions above are synchronized in one process and one thread, so you can take your time to complete the operations you want, such as algorithm effect verification (as in the [Quick Start](#quick-start), getting the inference result and displaying boxes to the window, etc.), even if it is stuttered due to synchronous operation, everything is accurate.
+
+#### Streamlit Debug
+
+A web application based on streamlit is provided, which facilitates development and debugging. You only need to inherit `StreamInferApp` and override two functions:
+
+- annotate_frame(self, name, data, frame)
+- output(name, position, data)
+
+The former is used to customize the content drawn on the frame, and the latter is for customizing streamlit data display components (by default, it appends st.text()).
+
+A simple example:
+
+```python
+import streamlit as st
+import os
+import cv2
+
+from stream_infer import Inference, StreamInferApp
+from stream_infer.dispatcher import DevelopDispatcher
+from stream_infer.algo import BaseAlgo
+from stream_infer.log import logger
+
+os.environ["YOLO_VERBOSE"] = str(False)
+
+from ultralytics import YOLO
+import supervision as sv
+
+
+class YoloDetectionAlgo(BaseAlgo):
+    def init(self):
+        self.model = YOLO("yolov8n.pt")
+
+    def run(self, frames):
+        try:
+            result = self.model(frames[0])
+            return result[0]
+        except Exception as e:
+            logger.error(e)
+            return None
+
+
+class PoseDetectionAlgo(BaseAlgo):
+    def init(self):
+        self.model = YOLO("yolov8n-pose.pt")
+
+    def run(self, frames):
+        try:
+            result = self.model(frames[0])
+            return result[0]
+        except Exception as e:
+            logger.error(e)
+            return None
+
+
+class CustomStreamInferApp(StreamInferApp):
+    def annotate_frame(self, name, data, frame):
+        if name == "pose":
+            keypoints = data.keypoints
+            for person in keypoints.data:
+                for kp in person:
+                    x, y, conf = kp
+                    if conf > 0.5:
+                        cv2.circle(frame, (int(x), int(y)), 5, (0, 0, 255), -1)
+        else:
+            detections = sv.Detections.from_ultralytics(data)
+            boundingbox_annotator = sv.BoundingBoxAnnotator()
+            label_annotator = sv.LabelAnnotator()
+            labels = [data.names[class_id] for class_id in detections.class_id]
+            frame = boundingbox_annotator.annotate(scene=frame, detections=detections)
+            frame = label_annotator.annotate(
+                scene=frame, detections=detections, labels=labels
+            )
+        return frame
+
+
+if __name__ == "__main__":
+    dispatcher = DevelopDispatcher(150)
+    inference = Inference(dispatcher)
+    inference.load_algo(
+        YoloDetectionAlgo("things"), frame_count=1, frame_step=30, interval=1
+    )
+    inference.load_algo(
+        PoseDetectionAlgo("pose"), frame_count=1, frame_step=1, interval=0.1
+    )
+    app = CustomStreamInferApp(inference)
+    app.start()
+```
 
 #### Real-time Running
 

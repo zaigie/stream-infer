@@ -93,9 +93,7 @@ if __name__ == "__main__":
     if OFFLINE:
         cv2.namedWindow("Inference", cv2.WINDOW_NORMAL)
         for frame, current_frame in player.play(PLAY_FPS, position=0):
-            current_algo_name = inference.auto_run_specific(
-                player.play_fps, current_frame
-            )
+            inference.auto_run_specific(player.play_fps, current_frame)
             _, data = dispatcher.get_last_result(YoloDectionAlgo.__name__, clear=False)
             if data is None:
                 continue
@@ -357,6 +355,93 @@ if __name__ == "__main__":
 ```
 
 正如[离线推理](#离线推理)中描述的一样，上述所有的执行都是在一个进程、一个线程中同步进行的，因此你可以慢慢完成您想要的操作，比如算法效果检验（如[快速开始](#快速开始)中给出的获取推理结果并展示盒子到窗口等），即使因为同步运行会卡顿，但一切都是准确无误的。
+
+#### Streamlit 调试
+
+提供了一个基于 streamlit 的 web 应用，便于开发和调试，你只需要继承 `StreamInferApp` 并重写两个函数即可：
+
+- annotate_frame(self, name, data, frame)
+- output(name, position, data)
+
+前者用于自定义绘制帧上的内容，后者用于自定义 streamlit 数据展示组件（默认是 st.text()追加）
+
+一个简单的例子：
+
+```python
+import streamlit as st
+import os
+import cv2
+
+from stream_infer import Inference, StreamInferApp
+from stream_infer.dispatcher import DevelopDispatcher
+from stream_infer.algo import BaseAlgo
+from stream_infer.log import logger
+
+os.environ["YOLO_VERBOSE"] = str(False)
+
+from ultralytics import YOLO
+import supervision as sv
+
+
+class YoloDetectionAlgo(BaseAlgo):
+    def init(self):
+        self.model = YOLO("yolov8n.pt")
+
+    def run(self, frames):
+        try:
+            result = self.model(frames[0])
+            return result[0]
+        except Exception as e:
+            logger.error(e)
+            return None
+
+
+class PoseDetectionAlgo(BaseAlgo):
+    def init(self):
+        self.model = YOLO("yolov8n-pose.pt")
+
+    def run(self, frames):
+        try:
+            result = self.model(frames[0])
+            return result[0]
+        except Exception as e:
+            logger.error(e)
+            return None
+
+
+class CustomStreamInferApp(StreamInferApp):
+    def annotate_frame(self, name, data, frame):
+        if name == "pose":
+            keypoints = data.keypoints
+            for person in keypoints.data:
+                for kp in person:
+                    x, y, conf = kp
+                    if conf > 0.5:
+                        cv2.circle(frame, (int(x), int(y)), 5, (0, 0, 255), -1)
+        else:
+            detections = sv.Detections.from_ultralytics(data)
+            boundingbox_annotator = sv.BoundingBoxAnnotator()
+            label_annotator = sv.LabelAnnotator()
+            labels = [data.names[class_id] for class_id in detections.class_id]
+            frame = boundingbox_annotator.annotate(scene=frame, detections=detections)
+            frame = label_annotator.annotate(
+                scene=frame, detections=detections, labels=labels
+            )
+        return frame
+
+
+if __name__ == "__main__":
+    dispatcher = DevelopDispatcher(150)
+    inference = Inference(dispatcher)
+    inference.load_algo(
+        YoloDetectionAlgo("things"), frame_count=1, frame_step=30, interval=1
+    )
+    inference.load_algo(
+        PoseDetectionAlgo("pose"), frame_count=1, frame_step=1, interval=0.1
+    )
+    app = CustomStreamInferApp(inference)
+    app.start()
+```
 
 #### 实时运行
 
