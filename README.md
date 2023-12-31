@@ -15,7 +15,7 @@ pip install -U stream-infer
 ## Quick Start
 
 > [!CAUTION]
-> If you need a visual development debugging tool or to develop on a remote server, you may need to work with app service to see[Streamlit Debug](#streamlit-debug)
+> If you need a visual development debugging tool or to develop on a remote server, you may need to work with app service to see [Streamlit Debug](#streamlit-debug)
 
 Below is a simple example of Stream Infer to help you get started and understand what Stream Infer does.
 
