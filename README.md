@@ -14,6 +14,9 @@ pip install -U stream-infer
 
 ## Quick Start
 
+> [!CAUTION]
+> If you need a visual development debugging tool or to develop on a remote server, you may need to work with app service to see[Streamlit Debug](#streamlit-debug)
+
 Below is a simple example of Stream Infer to help you get started and understand what Stream Infer does.
 
 This example uses the posture model of YOLOv8 for detection and draws the result into the cv2 window
@@ -355,6 +358,8 @@ if __name__ == "__main__":
 As described in [Offline Inference](#offline-inference), all the executions above are synchronized in one process and one thread, so you can take your time to complete the operations you want, such as algorithm effect verification (as in the [Quick Start](#quick-start), getting the inference result and displaying boxes to the window, etc.), even if it is stuttered due to synchronous operation, everything is accurate.
 
 #### Streamlit Debug
+
+https://github.com/zaigie/stream_infer/assets/17232619/7453a61e-ae0b-40fd-9e40-4d24033a961c
 
 A web application based on streamlit is provided, which facilitates development and debugging. You only need to inherit `StreamInferApp` and override two functions:
 

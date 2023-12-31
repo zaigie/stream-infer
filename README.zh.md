@@ -14,6 +14,9 @@ pip install -U stream-infer
 
 ## 快速开始
 
+> [!CAUTION]
+> 如果您需要一个可视化开发调试工具或者在远程服务器上进行开发，您可能需要基于 app service 工作，查看 [Streamlit 调试](#streamlit-调试)
+
 以下是一个 Stream Infer 的简单示例，以帮助您直接开始使用并了解 Stream Infer 做了什么工作
 
 该示例用了 YOLOv8 的姿态模型进行检测并绘制结果到 cv2 窗口中
@@ -357,6 +360,8 @@ if __name__ == "__main__":
 正如[离线推理](#离线推理)中描述的一样，上述所有的执行都是在一个进程、一个线程中同步进行的，因此你可以慢慢完成您想要的操作，比如算法效果检验（如[快速开始](#快速开始)中给出的获取推理结果并展示盒子到窗口等），即使因为同步运行会卡顿，但一切都是准确无误的。
 
 #### Streamlit 调试
+
+https://github.com/zaigie/stream_infer/assets/17232619/7453a61e-ae0b-40fd-9e40-4d24033a961c
 
 提供了一个基于 streamlit 的 web 应用，便于开发和调试，你只需要继承 `StreamInferApp` 并重写两个函数即可：
 
