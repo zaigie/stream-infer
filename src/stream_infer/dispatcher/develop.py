@@ -7,7 +7,7 @@ class DevelopDispatcher(Dispatcher):
     For develop
     """
 
-    def get_result(self, name, clear):
+    def get_result(self, name, clear=False):
         if self.collect_results.get(name):
             data = self.collect_results[name].copy()
             if clear:

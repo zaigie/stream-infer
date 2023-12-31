@@ -16,6 +16,12 @@ class Inference:
         self.timers[algo_instance.name] = Timer(interval)
         algo_instance.init()
 
+    def list_algos(self):
+        result = []
+        for algo_instance, _, _, _ in self.inferences_info:
+            result.append(algo_instance.name)
+        return result
+
     def run(self):
         for inference_info in self.inferences_info:
             algo_instance, _, _, _ = inference_info
@@ -36,10 +42,12 @@ class Inference:
         self.is_stop = True
 
     def auto_run_specific(self, fps, current_frame) -> str:
+        current_algo_names = []
         for algo_instance, _, _, frequency in self.inferences_info:
             if current_frame % int(frequency * fps) == 0:
                 self.run_specific(algo_instance.name)
-                return algo_instance.name
+                current_algo_names.append(algo_instance.name)
+        return current_algo_names
 
     def run_specific(self, algo_name):
         for inference_info in self.inferences_info:
