@@ -16,10 +16,10 @@ pip install -U stream-infer
 
 ## Quick Start
 
-All examples depend on YOLOv8 and opencv-python, and additional packages may be required for these examples:
+All examples depend on YOLOv8, and additional packages may be required for these examples:
 
 ```bash
-pip install ultralytics opencv-python
+pip install ultralytics
 ```
 
 The video files used in the examples are available at [sample-videos](https://github.com/intel-iot-devkit/sample-videos)

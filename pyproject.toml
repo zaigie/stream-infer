@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "stream_infer"
-version = "0.2.0"
+version = "0.2.1"
 description = "Real-time/offline inference framework for video and streaming media"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -13,8 +13,7 @@ authors = [
 ]
 dependencies = [
     "opencv-python>=4.8.1.0, <5",
-    "imageio>=2.9.0",
-    "imageio-ffmpeg>=0.4.7",
+    "av>=11.0.0",
     "loguru>=0.6.0",
     "streamlit>=1.29.0",
 ]
