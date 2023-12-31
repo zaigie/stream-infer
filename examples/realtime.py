@@ -3,6 +3,7 @@ from stream_infer.dispatcher import DevelopDispatcher, DispatcherManager
 from stream_infer.algo import BaseAlgo
 from stream_infer.producer import OpenCVProducer
 from stream_infer.log import logger
+from stream_infer.util import trans_position2time
 
 import os
 
@@ -33,7 +34,7 @@ def realtime_progress(inference: Inference, *args, **kwargs):
         YoloDectionAlgo.__name__, clear=True
     )
     if data is not None:
-        logger.debug(f"{current_time}(s) result: {data}")
+        logger.debug(f"{trans_position2time(current_time)}: {data}")
 
 
 if __name__ == "__main__":
