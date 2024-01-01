@@ -46,6 +46,6 @@ if __name__ == "__main__":
     )
 
     inference = Inference(dispatcher)
-    inference.load_algo(YoloDectionAlgo(), frame_count=1, frame_step=FPS, interval=1)
+    inference.load_algo(YoloDectionAlgo(), frame_count=1, frame_step=1, interval=1)
     inference.set_custom_process(realtime_process)
     inference.start(player, fps=FPS, offline=False)

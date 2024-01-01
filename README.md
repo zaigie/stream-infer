@@ -239,7 +239,7 @@ Here, we can give HeadDetectionAlgo a name to identify the running algorithm (ne
 The parameters for loading an algorithm are the framework's core functionality, allowing you to freely implement frame retrieval logic:
 
 - frame_count: The number of frames the algorithm needs to get, which is the number of frames the run() function will receive.
-- frame_step: Take 1 frame every `frame_step`, up to `frame_count` frames. If this parameter is filled with fps, it means taking the last `frame_count` frames every second.
+- frame_step: Take 1 frame every `frame_step`, up to `frame_count` frames. (when `frame_count` is equal to 1, this parameter determines only the startup delay)
 - interval: In seconds, indicating the frequency of algorithm calls, like `AnyOtherAlgo` will only be called once a minute to save resources when not needed.
 
 ### Producer

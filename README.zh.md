@@ -239,7 +239,7 @@ inference.load_algo(AnyOtherAlgo("other"), 5, 6, 60)
 而加载算法的几个参数则是框架的核心功能，让您能自由实现取帧逻辑：
 
 - frame_count：算法需要获取的帧数量，也就是最终 run() 函数中收到的 frames 数量。
-- frame_step：每隔 `frame_step` 取 1 帧，共取 `frame_count` 帧，如果该参数填入 fps，那么就意味着每秒取最后的 `frame_count` 帧。
+- frame_step：每隔 `frame_step` 取 1 帧，共取 `frame_count` 帧。（当 `frame_count` 为 1 时，这个参数决定的只是启动延迟）
 - interval：单位秒，表示算法调用频率，如 `AnyOtherAlgo` 就只会在一分钟才调用一次，用来在不需要调用它的时候节省资源
 
 ### Producer
