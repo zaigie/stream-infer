@@ -87,8 +87,8 @@ class Inference:
     ):
         if offline:
             for frame, current_frame in player.play(fps, position):
-                self.auto_run_specific(fps, current_frame)
-                self.process_func(frame=frame)
+                current_algo_names = self.auto_run_specific(fps, current_frame)
+                self.process_func(frame=frame, current_algo_names=current_algo_names)
         else:
             player.play_async(fps)
             self.run_async()

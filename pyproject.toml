@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "stream_infer"
-version = "0.2.1"
-description = "Real-time/offline inference framework for video and streaming media"
+version = "0.2.2"
+description = "Video streaming inference framework, integrating image algorithms and models for real-time/offline video structuring"
 readme = "README.md"
 license = { file = "LICENSE" }
 authors = [

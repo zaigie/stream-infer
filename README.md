@@ -6,6 +6,8 @@
 
 Stream Infer is a Python library designed for streaming inference in video processing applications, enabling the integration of various image algorithms for video structuring. It supports both real-time and offline inference modes.
 
+In short, Stream Infer is a device hardware and ML framework agnostic, supporting a lightweight version of [NVIDIA DeepStream](https://developer.nvidia.com/deepstream-sdk) for cloud or edge IoT devices.
+
 [![PyPI](https://img.shields.io/pypi/v/stream-infer?color=dark-green)](https://pypi.org/project/stream-infer/)
 [![PyPI downloads](https://img.shields.io/pypi/dm/stream-infer?color=dark-green)](https://pypi.org/project/stream-infer/)
 [![GitHub license](https://img.shields.io/github/license/zaigie/stream-infer?color=orange)](https://github.com/zaigie/stream-infer/blob/main/LICENSE)

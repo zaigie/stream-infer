@@ -6,6 +6,8 @@
 
 Stream Infer 是一个为视频处理应用中的流式推理设计的 Python 库，可结合各种图像算法将视频结构化。支持实时和离线两种推理模式。
 
+简而言之，Stream Infer 是一个不限制设备硬件与机器学习框架，支持云端或边缘 IoT 设备的轻量版 [NVIDIA DeepStream](https://developer.nvidia.com/deepstream-sdk)。
+
 [![PyPI](https://img.shields.io/pypi/v/stream-infer?color=dark-green)](https://pypi.org/project/stream-infer/)
 [![PyPI downloads](https://img.shields.io/pypi/dm/stream-infer?color=dark-green)](https://pypi.org/project/stream-infer/)
 [![GitHub license](https://img.shields.io/github/license/zaigie/stream-infer?color=orange)](https://github.com/zaigie/stream-infer/blob/main/LICENSE)

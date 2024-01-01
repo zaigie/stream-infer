@@ -45,6 +45,7 @@ def draw_boxes(frame, data):
 
 def offline_process(inference: Inference, *args, **kwargs):
     frame = kwargs.get("frame")
+    # current_algo_names = kwargs.get("current_algo_names")
     _, data = inference.dispatcher.get_last_result(
         YoloDectionAlgo.__name__, clear=False
     )
