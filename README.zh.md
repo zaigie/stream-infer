@@ -253,8 +253,8 @@ producer = PyAVProducer(1920, 1080)
 producer = OpenCVProducer(1920, 1080)
 ```
 
-> [!WARNING]
-> 当需要使用 `PyAVProducer` （基于 ffmpeg）用来加载一些 OpenCV 无法解码的视频或流时，请先安装 PyAV：`pip install av`
+> [!NOTE]
+> 大部分情况下 `OpenCVProducer` 够用，且性能优秀。不过您仍然可能需要使用 `PyAVProducer` （基于 ffmpeg）用来加载一些 OpenCV 无法解码的视频或流
 
 ### Player
 

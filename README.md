@@ -253,8 +253,8 @@ producer = PyAVProducer(1920, 1080)
 producer = OpenCVProducer(1920, 1080)
 ```
 
-> [!WARNING]
-> When using `PyAVProducer` (based on ffmpeg) to load some videos or streams that OpenCV cannot decode, please install PyAV first: `pip install av`
+> [!NOTE]
+> In most cases `OpenCVProducer` is sufficient and performs well. However, you may still need to use `PyAVProducer` (based on ffmpeg) to load some videos or streams that OpenCV cannot decode
 
 ### Player
 
