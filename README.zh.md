@@ -6,7 +6,27 @@
 
 Stream Infer 是一个为视频处理应用中的流式推理设计的 Python 库，可结合各种图像算法将视频结构化。支持实时和离线两种推理模式。
 
-当然，它只是一个运行框架，各种具体的算法或图像处理方法需要自己编写。
+[![PyPI](https://img.shields.io/pypi/v/stream-infer?color=dark-green)](https://pypi.org/project/stream-infer/)
+[![PyPI downloads](https://img.shields.io/pypi/dm/stream-infer?color=dark-green)](https://pypi.org/project/stream-infer/)
+[![GitHub license](https://img.shields.io/github/license/zaigie/stream-infer?color=orange)](https://github.com/zaigie/stream-infer/blob/main/LICENSE)
+[![GitHub commit activity](https://img.shields.io/github/commit-activity/m/zaigie/stream-infer)](https://github.com/zaigie/stream-infer/graphs/commit-activity)
+
+很多时候我们想要使用一个或多个图像算法和模型去分析视频，并能为这些算法设置不同的取帧逻辑和调用频率，最终得出结构化的推理结果。
+
+有时候甚至需要接入一个实时的摄像头或者网络直播流，按照设定好的规则去推理并反馈结果。
+
+如果你有以上需求，那么一个简单的 Stream Infer 就能满足你从开发到调试再到生产运行的一切需要。
+
+## 功能特性
+
+- 依赖简洁，纯 Python 编写，不受硬件架构限制
+- 支持所有基于 Python 的算法部署框架
+- 不到 30 行即可运行一个视频推理任务
+- 支持离线推理和实时推理，只需要改一个参数
+  - 离线推理将逐帧完全遍历视频并按照预设算法和逻辑串行推理得到结果
+  - 实时推理将取帧与推理分开，依赖处理设备的性能产生或大或小的延迟
+- 内置 streamlit 在本地/远程服务器上顺畅开发和调试
+- 组件低耦合，分工明确
 
 ## 安装
 

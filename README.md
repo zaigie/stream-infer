@@ -6,7 +6,27 @@
 
 Stream Infer is a Python library designed for streaming inference in video processing applications, enabling the integration of various image algorithms for video structuring. It supports both real-time and offline inference modes.
 
-It is important to note that Stream Infer serves as a runtime framework; specific algorithms or image processing methods need to be implemented by the user.
+[![PyPI](https://img.shields.io/pypi/v/stream-infer?color=dark-green)](https://pypi.org/project/stream-infer/)
+[![PyPI downloads](https://img.shields.io/pypi/dm/stream-infer?color=dark-green)](https://pypi.org/project/stream-infer/)
+[![GitHub license](https://img.shields.io/github/license/zaigie/stream-infer?color=orange)](https://github.com/zaigie/stream-infer/blob/main/LICENSE)
+[![GitHub commit activity](https://img.shields.io/github/commit-activity/m/zaigie/stream-infer)](https://github.com/zaigie/stream-infer/graphs/commit-activity)
+
+Often we want to use one or more image algorithms and models to analyze videos, and be able to set different frame capture logics and invocation frequencies for these algorithms, ultimately obtaining structured inferential results.
+
+Sometimes it's even necessary to connect to a real-time camera or a live web stream, to infer and feedback results according to pre-set rules.
+
+If you have the above requirements, then a simple Stream Infer can meet all your needs from development to debugging and to production operation.
+
+## Features
+
+- Minimal dependencies, purely written in Python, not limited by hardware architecture
+- Supports all Python-based algorithm deployment frameworks
+- Run a video inference task in less than 30 lines
+- Supports both offline and real-time inference, just by changing one parameter
+  - Offline inference completely traverses the video frame by frame and follows the preset algorithm and logical serial inference to get the result
+  - Real-time inference separates frame fetching from inference and generates large or small delays depending on the performance of the processing device
+- Built-in streamlit for smooth development and debugging on local/remote servers
+- Components are low-coupled, with clear division of labor
 
 ## Installation
 
