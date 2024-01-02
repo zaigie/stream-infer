@@ -84,7 +84,7 @@ class PyAVProducer:
             if hasattr(video_stream, "frames"):
                 frame_count = video_stream.frames
             else:
-                frame_count = -1
+                frame_count = 0
 
             return {
                 "width": width,

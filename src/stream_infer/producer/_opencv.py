@@ -80,8 +80,6 @@ class OpenCVProducer:
         height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
         fps = cap.get(cv2.CAP_PROP_FPS)
         frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        if frame_count == 0:
-            frame_count = -1
 
         cap.release()
 
