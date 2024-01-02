@@ -101,4 +101,4 @@ if __name__ == "__main__":
     app = StreamInferApp(inference)
     app.set_annotate_frame(annotate_frame)
     app.set_output(output)
-    app.start()
+    app.start(use_opencv=True, clear=False)  # use_opencv for use OpenCVProducer
