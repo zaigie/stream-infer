@@ -2,7 +2,7 @@ import os
 import streamlit as st
 from .inference import Inference
 from .player import Player
-from .producer import OpenCVProducer
+from .producer import OpenCVProducer, PyAVProducer
 from .util import trans_position2time
 from .log import logger
 
@@ -133,24 +133,29 @@ class StreamInferApp:
             with open(path, "w+", encoding="utf-8") as f:
                 f.write(self.fmt_output(result))
 
-    def run_inference(self, clear: bool = False):
-        producer = OpenCVProducer(self.width, self.height)
+    def run_inference(self, use_opencv: bool = True, clear: bool = False):
+        if use_opencv:
+            producer = OpenCVProducer(self.width, self.height)
+        else:
+            producer = PyAVProducer(self.width, self.height)
         player = Player(self.inference.dispatcher, producer, path=self.video_path)
 
         video_info = player.info
-        if video_info["frame_count"] < 0:
-            st.error("不能加载实时流")
-            return
-        total_sec = int(video_info["frame_count"] / video_info["fps"])
-        total_sec_display = trans_position2time(total_sec)
-        self.video_progress.progress(0, text=f"00:00:00 / {total_sec_display}")
-        temp_current_time = 0
+        is_realtime = video_info["frame_count"] <= 0
+        if not is_realtime:
+            total_sec = int(video_info["frame_count"] / video_info["fps"])
+            total_sec_display = trans_position2time(total_sec)
+            self.video_progress.progress(0, text=f"00:00:00 / {total_sec_display}")
+            temp_current_time = 0
+        else:
+            self.video_progress.progress(1, text="实时视频流")
 
         for frame, current_frame in player.play(
             self.frame_rate, position=self.start_position
         ):
-            if self.inference.dispatcher.get_current_time() != temp_current_time:
-                temp_current_time = self.inference.dispatcher.get_current_time()
+            now_current_time = self.inference.dispatcher.get_current_time()
+            if not is_realtime and now_current_time != temp_current_time:
+                temp_current_time = now_current_time
                 self.video_progress.progress(
                     temp_current_time / total_sec,
                     text=f"{trans_position2time(temp_current_time)} / {total_sec_display}",
@@ -205,11 +210,13 @@ class StreamInferApp:
 
         self.output_func = custom_output_wrapper
 
-    def start(self):
+    def start(self, use_opencv: bool = True, clear: bool = False):
         if self.get_state("mode") != "infering":
             st.stop()
 
-        for current_algo_name, position, data, frame in self.run_inference():
+        for current_algo_name, position, data, frame in self.run_inference(
+            use_opencv=use_opencv, clear=clear
+        ):
             if self.show_frame and frame is not None:
                 self.image_frame.image(frame, channels=self.color_channel)
             if self.show_output and current_algo_name:
