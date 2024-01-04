@@ -45,10 +45,10 @@ class Player:
         """
         if not isinstance(self.dispatcher, BaseProxy):
             logger.error(
-                f"Dispatcher is not an proxy: {type(self.dispatcher)}, use DispatcherManager().create() to create one"
+                f"Dispatcher is not an proxy: {type(self.dispatcher)}, use create(offline=False) to create"
             )
             raise ValueError(
-                f"Dispatcher is not an proxy: {type(self.dispatcher)}, use DispatcherManager().create() to create one"
+                f"Dispatcher is not an proxy: {type(self.dispatcher)}, use create(offline=False) to create"
             )
 
         if fps is None or fps >= self.fps:
