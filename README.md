@@ -201,7 +201,7 @@ from stream_infer.dispatcher import Dispatcher
 import requests
 ...
 class RequestDispatcher(Dispatcher):
-    def __init__(self, max_size: int = 120):
+    def __init__(self, max_size):
         super().__init__(max_size)
         self.sess = requests.Session()
         ...
@@ -217,14 +217,18 @@ class RequestDispatcher(Dispatcher):
 ...
 
 # Offline inference
-dispatcher = RequestDispatcher.create(offline=True, max_size=140)
+dispatcher = RequestDispatcher.create(offline=True, max_size=30)
 
 # Real-time inference
-dispatcher = RequestDispatcher.create(max_size=150)
+dispatcher = RequestDispatcher.create(max_size=15)
 ```
 
+You may have noticed that the instantiation of dispatcher differs between offline and real-time inference. This is because **in real-time inference, playback and inference are not in the same process**, and both need to share the same dispatcher, only the offline parameter has been changed, but the internal implementation uses the DispatcherManager agent.
+
 > [!CAUTION]
-> You may have noticed that the instantiation of dispatcher differs between offline and real-time inference. This is because **in real-time inference, playback and inference are not in the same process**, and both need to share the same dispatcher, only the offline parameter has been changed, but the internal implementation uses the DispatcherManager agent.
+> For the `max_size` parameter, the default value is 30, which keeps the latest 30 frames of ndarray data in the buffer. **The larger this parameter, the more memory the program occupies!**
+>
+> It is recommended to set it to `max_size = max(frame_count * (frame_step if frame_step else 1))` based on the actual inference interval.
 
 ### Inference
 
@@ -257,7 +261,7 @@ Here, we can give HeadDetectionAlgo a name to identify the running algorithm (ne
 The parameters for loading an algorithm are the framework's core functionality, allowing you to freely implement frame retrieval logic:
 
 - frame_count: The number of frames the algorithm needs to get, which is the number of frames the run() function will receive.
-- frame_step: Take 1 frame every `frame_step`, up to `frame_count` frames. (when `frame_count` is equal to 1, this parameter determines only the startup delay)
+- frame_step: Take 1 frame every `frame_step`, up to `frame_count` frames, receive 0. (when `frame_count` is equal to 1, this parameter determines only the startup delay)
 - interval: In seconds, indicating the frequency of algorithm calls, like `AnyOtherAlgo` will only be called once a minute to save resources when not needed.
 
 ### Producer
@@ -285,8 +289,10 @@ from stream_infer import Player
 
 ...
 
-player = Player(dispatcher, producer, video_path)
+player = Player(dispatcher, producer, video_path, show_progress)
 ```
+
+The `show_progress` parameter defaults to True, in which case the tqdm is used to display the progress bar. When set to False, progress is printed through the logger.
 
 ### Run
 

@@ -199,7 +199,7 @@ from stream_infer.dispatcher import Dispatcher
 import requests
 ...
 class RequestDispatcher(Dispatcher):
-    def __init__(self, max_size: int = 120):
+    def __init__(self, max_size):
         super().__init__(max_size)
         self.sess = requests.Session()
         ...
@@ -215,14 +215,18 @@ class RequestDispatcher(Dispatcher):
 ...
 
 # 离线推理
-dispatcher = RequestDispatcher.create(offline=True, max_size=140)
+dispatcher = RequestDispatcher.create(offline=True, max_size=30)
 
 # 实时推理
-dispatcher = RequestDispatcher.create(max_size=150)
+dispatcher = RequestDispatcher.create(max_size=15)
 ```
 
+您可能注意到，在离线推理和实时推理下实例化 dispatcher 的方式不同，这是因为 **实时推理下播放与推理不在一个进程中** ，而两者都需要共享同一个 dispatcher，虽然只是改变了 offline 参数，但其内部实现使用了 DispatcherManager 代理。
+
 > [!CAUTION]
-> 您可能注意到，在离线推理和实时推理下实例化 dispatcher 的方式不同，这是因为 **实时推理下播放与推理不在一个进程中** ，而两者都需要共享同一个 dispatcher，虽然只是改变了 offline 参数，但其内部实现使用了 DispatcherManager 代理。
+> 对于 `max_size`参数，默认值为 30，会将最新的 30 帧 ndarray 数据存在缓冲区中，**该参数越大，程序占用的内存就越大！**
+>
+> 建议根据实际推理间隔情况设置为 `max_size = max(frame_count * (frame_step if frame_step else 1))`
 
 ### Inference
 
@@ -255,7 +259,7 @@ inference.load_algo(AnyOtherAlgo("other"), 5, 6, 60)
 而加载算法的几个参数则是框架的核心功能，让您能自由实现取帧逻辑：
 
 - frame_count：算法需要获取的帧数量，也就是最终 run() 函数中收到的 frames 数量。
-- frame_step：每隔 `frame_step` 取 1 帧，共取 `frame_count` 帧。（当 `frame_count` 为 1 时，这个参数决定的只是启动延迟）
+- frame_step：每隔 `frame_step` 取 1 帧，共取 `frame_count` 帧，可为 0。（当 `frame_count` 为 1 时，这个参数决定的只是启动延迟）
 - interval：单位秒，表示算法调用频率，如 `AnyOtherAlgo` 就只会在一分钟才调用一次，用来在不需要调用它的时候节省资源
 
 ### Producer
@@ -283,8 +287,10 @@ from stream_infer import Player
 
 ...
 
-player = Player(dispatcher, producer, video_path)
+player = Player(dispatcher, producer, video_path, show_progress)
 ```
+
+`show_progress` 参数默认为 True，此时会使用 tqdm 显示进度条，而设置为 False 时会通过 logger 打印。
 
 ### Run
 

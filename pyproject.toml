@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "stream_infer"
-version = "0.3.1"
+version = "0.3.2"
 description = "Video streaming inference framework, integrating image algorithms and models for real-time/offline video structuring"
 authors = ["ZaiGie <jokerwho@yeah.net>"]
 maintainers = ["ZaiGie <jokerwho@yeah.net>"]
@@ -42,7 +42,7 @@ opencv-python-headless = ">=4.5.5.64,<=4.8.1.78"
 av = ">= 11.0.0"
 loguru = ">=0.6.0"
 streamlit = { version = ">=1.29.0", optional = true }
-
+tqdm = ">=4.62.3,<=4.66.1"
 
 [tool.poetry.extras]
 desktop = ["opencv-python"]
