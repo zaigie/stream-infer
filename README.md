@@ -1,4 +1,9 @@
-# Stream Infer
+# <img src="docs/img/logo_.png" alt="Stream Infer" height="60px">
+
+[![PyPI](https://img.shields.io/pypi/v/stream-infer?color=dark-green)](https://pypi.org/project/stream-infer/)
+[![PyPI downloads](https://img.shields.io/pypi/dm/stream-infer?color=dark-green)](https://pypi.org/project/stream-infer/)
+[![GitHub license](https://img.shields.io/github/license/zaigie/stream-infer?color=orange)](https://github.com/zaigie/stream-infer/blob/main/LICENSE)
+[![GitHub commit activity](https://img.shields.io/github/commit-activity/m/zaigie/stream-infer)](https://github.com/zaigie/stream-infer/graphs/commit-activity)
 
 <p align="left">
    <strong>English</strong> | <a href="./README.zh.md">简体中文</a>
@@ -8,10 +13,7 @@ Stream Infer is a Python library designed for streaming inference in video proce
 
 In short, Stream Infer is a device hardware and ML framework agnostic, supporting a lightweight version of [NVIDIA DeepStream](https://developer.nvidia.com/deepstream-sdk) for cloud or edge IoT devices.
 
-[![PyPI](https://img.shields.io/pypi/v/stream-infer?color=dark-green)](https://pypi.org/project/stream-infer/)
-[![PyPI downloads](https://img.shields.io/pypi/dm/stream-infer?color=dark-green)](https://pypi.org/project/stream-infer/)
-[![GitHub license](https://img.shields.io/github/license/zaigie/stream-infer?color=orange)](https://github.com/zaigie/stream-infer/blob/main/LICENSE)
-[![GitHub commit activity](https://img.shields.io/github/commit-activity/m/zaigie/stream-infer)](https://github.com/zaigie/stream-infer/graphs/commit-activity)
+---
 
 Often we want to use one or more image algorithms and models to analyze videos, and be able to set different frame capture logics and invocation frequencies for these algorithms, ultimately obtaining structured inferential results.
 

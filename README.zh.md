@@ -1,4 +1,9 @@
-# Stream Infer
+# <img src="docs/img/logo_.png" alt="Stream Infer" height="60px">
+
+[![PyPI](https://img.shields.io/pypi/v/stream-infer?color=dark-green)](https://pypi.org/project/stream-infer/)
+[![PyPI downloads](https://img.shields.io/pypi/dm/stream-infer?color=dark-green)](https://pypi.org/project/stream-infer/)
+[![GitHub license](https://img.shields.io/github/license/zaigie/stream-infer?color=orange)](https://github.com/zaigie/stream-infer/blob/main/LICENSE)
+[![GitHub commit activity](https://img.shields.io/github/commit-activity/m/zaigie/stream-infer)](https://github.com/zaigie/stream-infer/graphs/commit-activity)
 
 <p align="left">
    <a href="./README.md">English</a> | <strong>简体中文</strong>
@@ -8,10 +13,7 @@ Stream Infer 是一个为视频处理应用中的流式推理设计的 Python �
 
 简而言之，Stream Infer 是一个不限制设备硬件与机器学习框架，支持云端或边缘 IoT 设备的轻量版 [NVIDIA DeepStream](https://developer.nvidia.com/deepstream-sdk)。
 
-[![PyPI](https://img.shields.io/pypi/v/stream-infer?color=dark-green)](https://pypi.org/project/stream-infer/)
-[![PyPI downloads](https://img.shields.io/pypi/dm/stream-infer?color=dark-green)](https://pypi.org/project/stream-infer/)
-[![GitHub license](https://img.shields.io/github/license/zaigie/stream-infer?color=orange)](https://github.com/zaigie/stream-infer/blob/main/LICENSE)
-[![GitHub commit activity](https://img.shields.io/github/commit-activity/m/zaigie/stream-infer)](https://github.com/zaigie/stream-infer/graphs/commit-activity)
+---
 
 很多时候我们想要使用一个或多个图像算法和模型去分析视频，并能为这些算法设置不同的取帧逻辑和调用频率，最终得出结构化的推理结果。
 
