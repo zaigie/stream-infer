@@ -80,6 +80,7 @@ class OpenCVProducer:
         height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
         fps = cap.get(cv2.CAP_PROP_FPS)
         frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        total_seconds = int(frame_count / fps)
 
         cap.release()
 
@@ -88,4 +89,5 @@ class OpenCVProducer:
             "height": height,
             "fps": fps,
             "frame_count": frame_count,
+            "total_seconds": total_seconds,
         }

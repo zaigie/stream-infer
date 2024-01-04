@@ -86,11 +86,14 @@ class PyAVProducer:
             else:
                 frame_count = 0
 
+            total_seconds = int(frame_count / fps)
+
             return {
                 "width": width,
                 "height": height,
                 "fps": fps,
                 "frame_count": frame_count,
+                "total_seconds": total_seconds,
             }
 
         except av.AVError as e:

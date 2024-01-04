@@ -1,4 +1,5 @@
 import time
+from tqdm import tqdm
 import multiprocessing as mp
 from multiprocessing.managers import BaseProxy
 
@@ -7,10 +8,11 @@ from .log import logger
 
 
 class Player:
-    def __init__(self, dispatcher, producer, path):
+    def __init__(self, dispatcher, producer, path, show_progress: bool = True):
         self.dispatcher = dispatcher
         self.producer = producer
         self.path = path
+        self.show_progress = show_progress
         try:
             self.info = self.producer.get_info(self.path)
         except Exception as e:
@@ -25,19 +27,35 @@ class Player:
         fps = self.fps if fps is None else fps
         self.play_fps = fps
         interval_count = 0
+        if self.show_progress:
+            pbar = tqdm(
+                total=self.info["total_seconds"],
+                desc="Video Time",
+                leave=True,
+                unit="sec",
+            )
 
         if position > 0:
             self.dispatcher.set_current_time(position)
             self.dispatcher.set_current_frame(fps * position)
+            if self.show_progress:
+                pbar.update(fps * position)
 
-        for idx, frame in enumerate(self.producer.read(self.path, fps, position)):
+        for frame in self.producer.read(self.path, fps, position):
             self.dispatcher.add_frame(frame)
             interval_count += 1
             if interval_count >= fps:
                 interval_count = 0
                 self.dispatcher.increase_current_time()
-                logger.debug(f"current time: {self.get_play_time()}")
+                if self.show_progress:
+                    pbar.update(1)
+                else:
+                    logger.debug(
+                        f"{self.get_play_time()}/{trans_position2time(self.info['total_seconds'])}"
+                    )
             yield frame, self.dispatcher.get_current_frame()
+        if self.show_progress:
+            pbar.close()
 
     def play_async(self, fps=None):
         """
@@ -91,7 +109,13 @@ class Player:
         base_interval = 1 / self.play_fps
         start_time = time.time()
         interval_count = 0
-
+        if self.show_progress:
+            pbar = tqdm(
+                total=self.info["total_seconds"],
+                desc="Streaming Video Time",
+                leave=True,
+                unit="sec",
+            )
         for idx, frame in enumerate(self.producer.read(self.path, self.play_fps)):
             target_time = start_time + (idx * base_interval)
             time.sleep(max(0, target_time - time.time()))
@@ -100,8 +124,14 @@ class Player:
             if interval_count >= self.play_fps:
                 interval_count = 0
                 self.dispatcher.increase_current_time()
-                logger.debug(f"current time: {self.get_play_time()}")
-
+                if self.show_progress:
+                    pbar.update(1)
+                else:
+                    logger.debug(
+                        f"{self.get_play_time()}/{trans_position2time(self.info['total_seconds'])}"
+                    )
+        if self.show_progress:
+            pbar.close()
         self.is_end.value = True
 
     def normal_stream(self):
@@ -111,7 +141,7 @@ class Player:
         for frame in self.producer.read(self.path, self.play_fps):
             if self.dispatcher.get_current_frame() % self.play_fps == 0:
                 self.dispatcher.increase_current_time()
-                logger.debug(f"current time: {self.get_play_time()}")
+                logger.debug(f"{self.get_play_time()}")
             self.dispatcher.add_frame(frame)
 
         self.is_end.value = True

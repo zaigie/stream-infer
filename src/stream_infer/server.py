@@ -138,7 +138,12 @@ class StreamInferApp:
             producer = OpenCVProducer(self.width, self.height)
         else:
             producer = PyAVProducer(self.width, self.height)
-        player = Player(self.inference.dispatcher, producer, path=self.video_path)
+        player = Player(
+            self.inference.dispatcher,
+            producer,
+            path=self.video_path,
+            show_progress=False,
+        )
 
         video_info = player.info
         is_realtime = video_info["frame_count"] <= 0

@@ -61,10 +61,11 @@ if __name__ == "__main__":
         dispatcher,
         OpenCVProducer(INFER_FRAME_WIDTH, INFER_FRAME_HEIGHT),
         path="./classroom.mp4",
+        show_progress=True,
     )
 
     inference = Inference(dispatcher)
-    inference.load_algo(YoloDectionAlgo(), frame_count=1, frame_step=1, interval=0.1)
+    inference.load_algo(YoloDectionAlgo(), frame_count=1, frame_step=0, interval=0.1)
     inference.set_custom_process(offline_process)
     cv2.namedWindow("Inference", cv2.WINDOW_NORMAL)
     inference.start(
