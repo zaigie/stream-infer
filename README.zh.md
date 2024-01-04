@@ -54,6 +54,12 @@ https://github.com/zaigie/stream_infer/assets/17232619/6cbd6858-0292-4759-8d4c-a
 
 该模式主要用于本地/远程服务器上的算法开发和调试，支持自定义帧上绘制和数据展示组件。
 
+要运行该功能，请安装 server 版本：
+
+```bash
+pip install -U 'stream-infer[server]'
+```
+
 在这里查看及运行 demo：[examples/server.py](https://github.com/zaigie/stream_infer/blob/main/examples/server.py)
 
 ```bash
@@ -75,6 +81,11 @@ https://github.com/zaigie/stream_infer/assets/17232619/32aef0c9-89c7-4bc8-9dd6-2
 - ...
 
 在这里查看及运行 demo：[examples/offline.py](https://github.com/zaigie/stream_infer/blob/main/examples/offline.py)
+
+> [!WARNING]
+> 示例中使用了 OpenCV GUI 相关的功能，如展示窗口等，若要使用可以手动安装 opencv-python 或 opencv-contrib-python，亦或者：
+>
+> `pip install -U stream-infer[desktop]`
 
 ### 实时推理
 

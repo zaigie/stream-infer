@@ -54,6 +54,12 @@ Implemented through a visual web application using [streamlit](https://github.co
 
 This mode is primarily used for algorithm development and debugging on local/remote servers, supporting custom frame drawing and data display components.
 
+To run this feature, install the server version:
+
+```bash
+pip install -U 'stream-infer[server]'
+```
+
 View and run the demo here: [examples/server.py](https://github.com/zaigie/stream_infer/blob/main/examples/server.py)
 
 ```bash
@@ -75,6 +81,11 @@ Besides debugging during the development phase, offline inference can also be us
 - ...
 
 View and run the demo here: [examples/offline.py](https://github.com/zaigie/stream_infer/blob/main/examples/offline.py)
+
+> [!WARNING]
+> This example use OpenCV GUI-related features, such as presentation Windows, which can be manually installed either `opencv-python` or `opencv-contrib-python`, or simply
+>
+> `pip install -U stream-infer[desktop]`
 
 ### Real-time Inference
 
