@@ -1,4 +1,4 @@
-# <img src="docs/img/logo_.png" alt="Stream Infer" height="60px">
+# <img src="https://github.com/zaigie/stream-infer/blob/main/docs/img/logo_.png?raw=true" alt="Stream Infer" height="60px">
 
 [![PyPI](https://img.shields.io/pypi/v/stream-infer?color=dark-green)](https://pypi.org/project/stream-infer/)
 [![PyPI downloads](https://img.shields.io/pypi/dm/stream-infer?color=dark-green)](https://pypi.org/project/stream-infer/)
@@ -21,7 +21,7 @@ Sometimes it's even necessary to connect to a real-time camera or a live web str
 
 If you have the above requirements, then a simple Stream Infer can meet all your needs from development to debugging and to production operation.
 
-![Flow](./docs/img/flow.svg)
+![Flow](https://github.com/zaigie/stream-infer/blob/main/docs/img/flow.svg?raw=true)
 
 ## Features
 

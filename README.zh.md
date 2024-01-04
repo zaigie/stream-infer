@@ -1,4 +1,4 @@
-# <img src="docs/img/logo_.png" alt="Stream Infer" height="60px">
+# <img src="https://github.com/zaigie/stream-infer/blob/main/docs/img/logo_.png?raw=true" alt="Stream Infer" height="60px">
 
 [![PyPI](https://img.shields.io/pypi/v/stream-infer?color=dark-green)](https://pypi.org/project/stream-infer/)
 [![PyPI downloads](https://img.shields.io/pypi/dm/stream-infer?color=dark-green)](https://pypi.org/project/stream-infer/)
@@ -21,7 +21,7 @@ Stream Infer 是一个为视频处理应用中的流式推理设计的 Python �
 
 如果你有以上需求，那么一个简单的 Stream Infer 就能满足你从开发到调试再到生产运行的一切需要。
 
-![Flow](./docs/img/flow.cn.svg)
+![Flow](https://github.com/zaigie/stream-infer/blob/main/docs/img/flow.cn.svg?raw=true)
 
 ## 功能特性
 
