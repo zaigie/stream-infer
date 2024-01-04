@@ -19,6 +19,8 @@ Sometimes it's even necessary to connect to a real-time camera or a live web str
 
 If you have the above requirements, then a simple Stream Infer can meet all your needs from development to debugging and to production operation.
 
+![Flow](./docs/img/flow.svg)
+
 ## Features
 
 - Minimal dependencies, purely written in Python, not limited by hardware architecture
