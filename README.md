@@ -25,13 +25,13 @@ If you have the above requirements, then a simple Stream Infer can meet all your
 
 - Minimal dependencies, purely written in Python, not limited by hardware architecture
 - Supports all Python-based algorithm deployment frameworks
-- Run a video inference task in less than 30 lines
+- Run a video inference task in less than 10 lines code
 - Supports both offline and real-time inference, just by changing one parameter
   - Offline inference completely traverses the video frame by frame and follows the preset algorithm and logical serial inference to get the result
   - Real-time inference separates frame fetching from inference and generates large or small delays depending on the performance of the processing device
 - Offline inference supports recording video files to a local disk
-- Built-in streamlit for smooth development and debugging on local/remote servers
-- Components are low-coupled, with clear division of labor
+- Supports visual development and debugging on local/remote servers via [streamlit](https://github.com/streamlit/streamlit)
+- Modules are low-coupled, with clear division of labor
 
 ## Installation
 
