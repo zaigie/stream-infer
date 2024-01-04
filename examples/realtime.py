@@ -38,7 +38,7 @@ def realtime_process(inference: Inference, *args, **kwargs):
 
 
 if __name__ == "__main__":
-    dispatcher = DevelopDispatcher.create()
+    dispatcher = DevelopDispatcher.create(max_size=20)
     player = Player(
         dispatcher,
         OpenCVProducer(INFER_FRAME_WIDTH, INFER_FRAME_HEIGHT),
@@ -46,6 +46,6 @@ if __name__ == "__main__":
     )
 
     inference = Inference(dispatcher)
-    inference.load_algo(YoloDectionAlgo(), frame_count=1, frame_step=1, interval=1)
+    inference.load_algo(YoloDectionAlgo(), frame_count=1, frame_step=0, interval=1)
     inference.set_custom_process(realtime_process)
     inference.start(player, fps=FPS)

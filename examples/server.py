@@ -90,13 +90,13 @@ def output(app: StreamInferApp, name, position, data):
 
 
 if __name__ == "__main__":
-    dispatcher = DevelopDispatcher.create(offline=True)
+    dispatcher = DevelopDispatcher.create(max_size=5, offline=True)
     inference = Inference(dispatcher)
     inference.load_algo(
-        YoloDetectionAlgo("things"), frame_count=1, frame_step=1, interval=1
+        YoloDetectionAlgo("things"), frame_count=1, frame_step=0, interval=1
     )
     inference.load_algo(
-        PoseDetectionAlgo("pose"), frame_count=1, frame_step=1, interval=0.1
+        PoseDetectionAlgo("pose"), frame_count=1, frame_step=0, interval=0.1
     )
     app = StreamInferApp(inference)
     app.set_annotate_frame(annotate_frame)
