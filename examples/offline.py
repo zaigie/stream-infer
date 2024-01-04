@@ -56,7 +56,7 @@ def offline_process(inference: Inference, *args, **kwargs):
 
 
 if __name__ == "__main__":
-    dispatcher = DevelopDispatcher()
+    dispatcher = DevelopDispatcher.create(offline=True)
     player = Player(
         dispatcher,
         OpenCVProducer(INFER_FRAME_WIDTH, INFER_FRAME_HEIGHT),
@@ -67,5 +67,5 @@ if __name__ == "__main__":
     inference.load_algo(YoloDectionAlgo(), frame_count=1, frame_step=1, interval=0.1)
     inference.set_custom_process(offline_process)
     cv2.namedWindow("Inference", cv2.WINDOW_NORMAL)
-    inference.start(player, fps=FPS, position=0)
+    inference.start(player, fps=FPS, position=0, offline=True)
     cv2.destroyAllWindows()

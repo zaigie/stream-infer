@@ -179,7 +179,7 @@ Here, `inference_result` is the original result returned from inference, and the
 Based on this, if you wish to request the results to a REST service or perform other operations on existing data before the request, you can achieve this by **inheriting the Dispatcher class** and rewriting functions:
 
 ```python
-from stream_infer.dispatcher import Dispatcher, DispatcherManager
+from stream_infer.dispatcher import Dispatcher
 import requests
 ...
 class RequestDispatcher(Dispatcher):
@@ -199,14 +199,14 @@ class RequestDispatcher(Dispatcher):
 ...
 
 # Offline inference
-dispatcher = RequestDispatcher()
+dispatcher = RequestDispatcher.create(offline=True, max_size=140)
 
 # Real-time inference
-dispatcher = DispatcherManager(RequestDispatcher).create(max_size=150)
+dispatcher = RequestDispatcher.create(max_size=150)
 ```
 
 > [!CAUTION]
-> You may have noticed that the instantiation of dispatcher differs between offline and real-time inference. This is because **in real-time inference, playback and inference are not in the same process**, and both need to share the same dispatcher, hence the use of DispatcherManager proxy.
+> You may have noticed that the instantiation of dispatcher differs between offline and real-time inference. This is because **in real-time inference, playback and inference are not in the same process**, and both need to share the same dispatcher, only the offline parameter has been changed, but the internal implementation uses the DispatcherManager agent.
 
 ### Inference
 
@@ -280,7 +280,7 @@ inference.start(player, fps=fps, position=0, offline=True)
 
 - fps: Indicates the desired playback frame rate. **If the frame rate of the video source is higher than this number, it will skip frames through frame skipping logic to forcibly play at this specified frame rate**, thereby saving performance to some extent.
 - position: Accepts a parameter in seconds, which can specify the start position for inference (only available in offline inference; how could you specify a position in real-time inference, right?).
-- offline: Whether it is offline inference. Set to False if you wish to run real-time inference.
+- offline: The default is False, whether it is offline inference, when you want to run real-time inference, no parameters can be passed.
 
 It is worth mentioning that during the inference process, you may need to process the frames or inference results. We provide the `set_custom_process()` function to facilitate this purpose.
 

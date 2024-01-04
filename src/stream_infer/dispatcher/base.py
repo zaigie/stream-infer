@@ -56,6 +56,13 @@ class Dispatcher:
     def set_current_frame(self, frame):
         self.current_frame = frame
 
+    @classmethod
+    def create(cls, max_size=120, offline=False):
+        if offline:
+            return cls(max_size)
+        else:
+            return DispatcherManager(cls).create(max_size)
+
 
 class DispatcherManager:
     def __init__(self, obj=None):

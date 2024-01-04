@@ -83,7 +83,7 @@ class Inference:
         player: Player,
         fps: int = 30,
         position: int = 0,
-        offline: bool = True,
+        offline: bool = False,
     ):
         if offline:
             for frame, current_frame in player.play(fps, position):

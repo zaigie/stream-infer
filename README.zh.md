@@ -179,7 +179,7 @@ def collect_result(self, inference_result):
 在此基础上，若您想要将结果请求到 REST 服务，或者在请求前对现有数据做其它操作，都可以通过 **继承 Dispatcher 类** 并重写函数的方式实现：
 
 ```python
-from stream_infer.dispatcher import Dispatcher, DispatcherManager
+from stream_infer.dispatcher import Dispatcher
 import requests
 ...
 class RequestDispatcher(Dispatcher):
@@ -199,14 +199,14 @@ class RequestDispatcher(Dispatcher):
 ...
 
 # 离线推理
-dispatcher = RequestDispatcher()
+dispatcher = RequestDispatcher.create(offline=True, max_size=140)
 
 # 实时推理
-dispatcher = DispatcherManager(RequestDispatcher).create(max_size=150)
+dispatcher = RequestDispatcher.create(max_size=150)
 ```
 
 > [!CAUTION]
-> 您可能注意到，在离线推理和实时推理下实例化 dispatcher 的方式不同，这是因为 **实时推理下播放与推理不在一个进程中** ，而两者都需要共享同一个 dispatcher，因此使用了 DispatcherManager 代理。
+> 您可能注意到，在离线推理和实时推理下实例化 dispatcher 的方式不同，这是因为 **实时推理下播放与推理不在一个进程中** ，而两者都需要共享同一个 dispatcher，虽然只是改变了 offline 参数，但其内部实现使用了 DispatcherManager 代理。
 
 ### Inference
 
@@ -280,7 +280,7 @@ inference.start(player, fps=fps, position=0, offline=True)
 
 - fps：表示期望播放帧率，**如果视频源的帧率大于这个数，将会由跳帧逻辑进行跳帧，强行播放这个指定的帧率**，一定程度上节省性能。
 - position：接收一个以秒为单位的参数，可以指定开始推理的位置（仅离线推理下可用，实时推理怎么可能指定位置呢对吧？）。
-- offline：是否为离线推理，当你想运行实时推理，设置为 False 即可。
+- offline：默认为 False，是否为离线推理，当你想运行实时推理，不传参数即可。
 
 需要特别提到的是，在推理过程中，您可能需要对帧或推理结果进行处理，我们提供了 `set_custom_process()` 函数方便您完成这个目的。
 

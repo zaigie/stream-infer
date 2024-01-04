@@ -90,7 +90,7 @@ def output(app: StreamInferApp, name, position, data):
 
 
 if __name__ == "__main__":
-    dispatcher = DevelopDispatcher()
+    dispatcher = DevelopDispatcher.create(offline=True)
     inference = Inference(dispatcher)
     inference.load_algo(
         YoloDetectionAlgo("things"), frame_count=1, frame_step=1, interval=1

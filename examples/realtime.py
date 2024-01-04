@@ -1,5 +1,5 @@
 from stream_infer import Inference, Player
-from stream_infer.dispatcher import DevelopDispatcher, DispatcherManager
+from stream_infer.dispatcher import DevelopDispatcher
 from stream_infer.algo import BaseAlgo
 from stream_infer.producer import OpenCVProducer
 from stream_infer.log import logger
@@ -38,7 +38,7 @@ def realtime_process(inference: Inference, *args, **kwargs):
 
 
 if __name__ == "__main__":
-    dispatcher = DispatcherManager(DevelopDispatcher).create()
+    dispatcher = DevelopDispatcher.create()
     player = Player(
         dispatcher,
         OpenCVProducer(INFER_FRAME_WIDTH, INFER_FRAME_HEIGHT),
@@ -48,4 +48,4 @@ if __name__ == "__main__":
     inference = Inference(dispatcher)
     inference.load_algo(YoloDectionAlgo(), frame_count=1, frame_step=1, interval=1)
     inference.set_custom_process(realtime_process)
-    inference.start(player, fps=FPS, offline=False)
+    inference.start(player, fps=FPS)
