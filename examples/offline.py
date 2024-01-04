@@ -67,5 +67,7 @@ if __name__ == "__main__":
     inference.load_algo(YoloDectionAlgo(), frame_count=1, frame_step=1, interval=0.1)
     inference.set_custom_process(offline_process)
     cv2.namedWindow("Inference", cv2.WINDOW_NORMAL)
-    inference.start(player, fps=FPS, position=0, offline=True)
+    inference.start(
+        player, fps=FPS, position=0, offline=True, recording_path="./processed.mp4"
+    )
     cv2.destroyAllWindows()

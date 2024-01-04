@@ -2,6 +2,7 @@ import threading as th
 import cv2
 
 from .player import Player
+from .recorder import Recorder
 from .timer import Timer
 from .log import logger
 
@@ -84,11 +85,20 @@ class Inference:
         fps: int = 30,
         position: int = 0,
         offline: bool = False,
+        recording_path: str = None,
     ):
         if offline:
+            recorder = Recorder(player, recording_path) if recording_path else None
             for frame, current_frame in player.play(fps, position):
                 current_algo_names = self.auto_run_specific(fps, current_frame)
-                self.process_func(frame=frame, current_algo_names=current_algo_names)
+                processed_frame = self.process_func(
+                    frame=frame, current_algo_names=current_algo_names
+                )
+                frame = processed_frame if processed_frame is not None else frame
+                if recorder:
+                    recorder.add_frame(frame)
+            if recorder:
+                recorder.close()
         else:
             player.play_async(fps)
             self.run_async()

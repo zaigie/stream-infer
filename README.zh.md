@@ -27,6 +27,7 @@ Stream Infer 是一个为视频处理应用中的流式推理设计的 Python �
 - 支持离线推理和实时推理，只需要改一个参数
   - 离线推理将逐帧完全遍历视频并按照预设算法和逻辑串行推理得到结果
   - 实时推理将取帧与推理分开，依赖处理设备的性能产生或大或小的延迟
+- 离线推理支持录制视频文件到本地磁盘
 - 内置 streamlit 在本地/远程服务器上顺畅开发和调试
 - 组件低耦合，分工明确
 
@@ -286,14 +287,17 @@ player = Player(dispatcher, producer, video_path)
 通过 Inference 的 `start()` 即可简单运行整个脚本
 
 ```python
-inference.start(player, fps=fps, position=0, offline=True)
+inference.start(player, fps=fps, position=0, offline=True, recording_path="./processed.mp4")
 ```
 
 - fps：表示期望播放帧率，**如果视频源的帧率大于这个数，将会由跳帧逻辑进行跳帧，强行播放这个指定的帧率**，一定程度上节省性能。
 - position：接收一个以秒为单位的参数，可以指定开始推理的位置（仅离线推理下可用，实时推理怎么可能指定位置呢对吧？）。
 - offline：默认为 False，是否为离线推理，当你想运行实时推理，不传参数即可。
+- recording_path：添加此参数后，在离线推理下可以录制处理后的帧到新的视频文件中。
 
 需要特别提到的是，在推理过程中，您可能需要对帧或推理结果进行处理，我们提供了 `set_custom_process()` 函数方便您完成这个目的。
+
+目前，录制的视频只支持 mp4 格式，当您使用 `OpenCVProducer` 时，录制的是 mp4v 编码的文件，而在`PyAVProduer`下则是 h264 编码的 mp4 文件，我们更推荐您使用 `PyAVProducer`，因为它有更好的压缩率。
 
 关于具体的使用您可以分别参考 [examples/offline.py](https://github.com/zaigie/stream_infer/blob/main/examples/offline.py) 和 [examples/realtime.py](https://github.com/zaigie/stream_infer/blob/main/examples/realtime.py) 的示例代码。
 

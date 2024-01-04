@@ -27,6 +27,7 @@ If you have the above requirements, then a simple Stream Infer can meet all your
 - Supports both offline and real-time inference, just by changing one parameter
   - Offline inference completely traverses the video frame by frame and follows the preset algorithm and logical serial inference to get the result
   - Real-time inference separates frame fetching from inference and generates large or small delays depending on the performance of the processing device
+- Offline inference supports recording video files to a local disk
 - Built-in streamlit for smooth development and debugging on local/remote servers
 - Components are low-coupled, with clear division of labor
 
@@ -286,14 +287,17 @@ player = Player(dispatcher, producer, video_path)
 Simply run the entire script through Inference's `start()`.
 
 ```python
-inference.start(player, fps=fps, position=0, offline=True)
+inference.start(player, fps=fps, position=0, offline=True, recording_path="./processed.mp4")
 ```
 
 - fps: Indicates the desired playback frame rate. **If the frame rate of the video source is higher than this number, it will skip frames through frame skipping logic to forcibly play at this specified frame rate**, thereby saving performance to some extent.
 - position: Accepts a parameter in seconds, which can specify the start position for inference (only available in offline inference; how could you specify a position in real-time inference, right?).
 - offline: The default is False, whether it is offline inference, when you want to run real-time inference, no parameters can be passed.
+- recording_path: After this parameter is added, the processed frame can be recorded into a new video file under offline inference.
 
 It is worth mentioning that during the inference process, you may need to process the frames or inference results. We provide the `set_custom_process()` function to facilitate this purpose.
+
+Currently, the recorded videos only support the mp4 format. When you use `OpenCVProducer`, the files are encoded in mp4v, while under `PyAVProducer`, they are encoded in h264 mp4 format. We recommend using `PyAVProducer` as it offers a better compression rate.
 
 For specific usage, you can refer to the example codes in [examples/offline.py](https://github.com/zaigie/stream_infer/blob/main/examples/offline.py) and [examples/realtime.py](https://github.com/zaigie/stream_infer/blob/main/examples/realtime.py).
 
