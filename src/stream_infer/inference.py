@@ -17,7 +17,7 @@ class Inference:
 
     def load_algo(self, algo_instance, frame_count, frame_step, interval):
         self.inferences_info.append((algo_instance, frame_count, frame_step, interval))
-        self.timers[algo_instance.name] = Timer(interval)
+        self.timers[algo_instance.name] = Timer(interval, key=algo_instance.name)
         algo_instance.init()
 
     def list_algos(self):
