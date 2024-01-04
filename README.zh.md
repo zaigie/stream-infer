@@ -19,7 +19,7 @@ Stream Infer 是一个为视频处理应用中的流式推理设计的 Python �
 
 如果你有以上需求，那么一个简单的 Stream Infer 就能满足你从开发到调试再到生产运行的一切需要。
 
-![Flow](./docs/img/flow.svg)
+![Flow](./docs/img/flow.cn.svg)
 
 ## 功能特性
 
