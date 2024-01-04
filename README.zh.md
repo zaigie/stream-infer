@@ -6,7 +6,7 @@
 [![GitHub commit activity](https://img.shields.io/github/commit-activity/m/zaigie/stream-infer)](https://github.com/zaigie/stream-infer/graphs/commit-activity)
 
 <p align="left">
-   <a href="./README.md">English</a> | <strong>简体中文</strong>
+   <a href="https://github.com/zaigie/stream-infer/blob/main/README.md">English</a> | <strong>简体中文</strong>
 </p>
 
 Stream Infer 是一个为视频处理应用中的流式推理设计的 Python 库，可结合各种图像算法将视频结构化。支持实时和离线两种推理模式。

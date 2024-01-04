@@ -6,7 +6,7 @@
 [![GitHub commit activity](https://img.shields.io/github/commit-activity/m/zaigie/stream-infer)](https://github.com/zaigie/stream-infer/graphs/commit-activity)
 
 <p align="left">
-   <strong>English</strong> | <a href="./README.zh.md">简体中文</a>
+   <strong>English</strong> | <a href="https://github.com/zaigie/stream-infer/blob/main/README.zh.md">简体中文</a>
 </p>
 
 Stream Infer is a Python library designed for streaming inference in video processing applications, enabling the integration of various image algorithms for video structuring. It supports both real-time and offline inference modes.
