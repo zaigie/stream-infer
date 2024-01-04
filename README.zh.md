@@ -51,26 +51,6 @@ pip install ultralytics
 
 同时，示例中用到的视频文件在 [sample-videos](https://github.com/intel-iot-devkit/sample-videos)
 
-### 可视化开发&调试
-
-https://github.com/zaigie/stream_infer/assets/17232619/6cbd6858-0292-4759-8d4c-ace154567f8e
-
-通过 [streamlit](https://github.com/streamlit/streamlit) 实现的可视化 web 应用。
-
-该模式主要用于本地/远程服务器上的算法开发和调试，支持自定义帧上绘制和数据展示组件。
-
-要运行该功能，请安装 server 版本：
-
-```bash
-pip install -U 'stream-infer[server]'
-```
-
-在这里查看及运行 demo：[examples/server.py](https://github.com/zaigie/stream_infer/blob/main/examples/server.py)
-
-```bash
-streamlit run server.py
-```
-
 ### 离线推理
 
 https://github.com/zaigie/stream_infer/assets/17232619/32aef0c9-89c7-4bc8-9dd6-25035bee2074
@@ -109,6 +89,26 @@ https://github.com/zaigie/stream_infer/assets/17232619/32aef0c9-89c7-4bc8-9dd6-2
 - ...
 
 在这里查看及运行 demo：[examples/realtime.py](https://github.com/zaigie/stream_infer/blob/main/examples/realtime.py)
+
+### 可视化开发&调试
+
+https://github.com/zaigie/stream_infer/assets/17232619/6cbd6858-0292-4759-8d4c-ace154567f8e
+
+通过 [streamlit](https://github.com/streamlit/streamlit) 实现的可视化 web 应用。
+
+该模式主要用于本地/远程服务器上的算法开发和调试，支持自定义帧上绘制和数据展示组件。
+
+要运行该功能，请安装 server 版本：
+
+```bash
+pip install -U 'stream-infer[server]'
+```
+
+在这里查看及运行 demo：[examples/server.py](https://github.com/zaigie/stream_infer/blob/main/examples/server.py)
+
+```bash
+streamlit run server.py
+```
 
 ## 模块
 

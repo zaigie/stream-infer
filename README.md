@@ -51,26 +51,6 @@ pip install ultralytics
 
 The video files used in the examples are available at [sample-videos](https://github.com/intel-iot-devkit/sample-videos)
 
-### Visualization Development & Debugging
-
-https://github.com/zaigie/stream_infer/assets/17232619/6cbd6858-0292-4759-8d4c-ace154567f8e
-
-Implemented through a visual web application using [streamlit](https://github.com/streamlit/streamlit).
-
-This mode is primarily used for algorithm development and debugging on local/remote servers, supporting custom frame drawing and data display components.
-
-To run this feature, install the server version:
-
-```bash
-pip install -U 'stream-infer[server]'
-```
-
-View and run the demo here: [examples/server.py](https://github.com/zaigie/stream_infer/blob/main/examples/server.py)
-
-```bash
-streamlit run server.py
-```
-
 ### Offline Inference
 
 https://github.com/zaigie/stream_infer/assets/17232619/32aef0c9-89c7-4bc8-9dd6-25035bee2074
@@ -109,6 +89,28 @@ Real-time inference is not suitable for the development phase but is often used 
 - ...
 
 View and run the demo here: [examples/realtime.py](https://github.com/zaigie/stream_infer/blob/main/examples/realtime.py)
+
+### Visualization Development & Debugging
+
+https://github.com/zaigie/stream_infer/assets/17232619/6cbd6858-0292-4759-8d4c-ace154567f8e
+
+Implemented through a visual web application using [streamlit](https://github.com/streamlit/streamlit).
+
+> The current interface text is Chinese.
+
+This mode is primarily used for algorithm development and debugging on local/remote servers, supporting custom frame drawing and data display components.
+
+To run this feature, install the server version:
+
+```bash
+pip install -U 'stream-infer[server]'
+```
+
+View and run the demo here: [examples/server.py](https://github.com/zaigie/stream_infer/blob/main/examples/server.py)
+
+```bash
+streamlit run server.py
+```
 
 ## Modules
 
