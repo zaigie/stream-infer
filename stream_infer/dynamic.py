@@ -2,7 +2,7 @@ import os
 import sys
 import importlib
 from pydantic import BaseModel, ValidationError
-
+from typing import Union
 
 from .inference import Inference
 from .player import Player
@@ -17,31 +17,31 @@ class ProducerData(BaseModel):
     height: int
 
 
+class DynamicImport(BaseModel):
+    module: str
+    name: str
+    args: Union[dict, None] = None
+
+
 class AlgoArgs(BaseModel):
     frame_count: int
     frame_step: int
     interval: int
 
 
-class Algos(BaseModel):
-    module: str
-    name: str
+class Algos(DynamicImport):
     args: AlgoArgs
-
-
-class DispatcherData(BaseModel):
-    module: str
-    name: str
-    args: dict
 
 
 class DynamicConfig(BaseModel):
     mode: Mode
     source: str
     fps: int
-    dispatcher: DispatcherData
+    dispatcher: DynamicImport
     algos: list[Algos]
     producer: ProducerData
+    process: Union[DynamicImport, None] = None
+    recording_path: Union[str, None] = None
 
 
 class DynamicApp:
@@ -59,6 +59,9 @@ class DynamicApp:
             mode=config.mode, **config.dispatcher.args
         )
         self.inference = Inference(self.dispatcher)
+        if config.process is not None:
+            process_module = self.dynamic_import(config.process.module)
+            self.inference.process(getattr(process_module, config.process.name))
 
     def start(self):
         if self.config.producer.type in [
@@ -89,14 +92,8 @@ class DynamicApp:
             ),
             fps=self.config.fps,
             mode=self.config.mode,
+            recording_path=self.config.recording_path,
         )
-
-    def process(self, func):
-        def wrapper(*args, **kwargs):
-            return func(self.inference, *args, **kwargs)
-
-        self.inference.process(wrapper)
-        return wrapper
 
     @staticmethod
     def dynamic_import(module_name):

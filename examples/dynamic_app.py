@@ -1,5 +1,4 @@
 from stream_infer.dynamic import DynamicApp
-from stream_infer.log import logger
 
 config = {
     "mode": "offline",
@@ -22,16 +21,12 @@ config = {
         }
     ],
     "producer": {"type": "opencv", "width": 640, "height": 360},
+    # "process": {"module": "./dynamic_process.py", "name": "dynamic_process"},
+    # "recording_path": "./processed.mp4",
 }
 
-
-def process(inference, *args, **kwargs):
-    _, data = inference.dispatcher.get_last_result("YoloDetectionAlgo2", clear=True)
-    if data is not None:
-        logger.debug(f"{data}")
-
+# process and recording_path are optional
 
 if __name__ == "__main__":
     app = DynamicApp(config)
-    app.process(process)
     app.start()
