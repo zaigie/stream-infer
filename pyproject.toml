@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "stream_infer"
-version = "0.4.0"
+version = "0.4.1"
 description = "Video streaming inference framework, integrating image algorithms and models for real-time/offline video structuring"
 authors = ["ZaiGie <jokerwho@yeah.net>"]
 maintainers = ["ZaiGie <jokerwho@yeah.net>"]
