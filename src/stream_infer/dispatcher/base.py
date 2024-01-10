@@ -2,22 +2,20 @@ from multiprocessing.managers import BaseManager
 from collections import deque
 from typing import List, Any
 
+from ..util import position2time
 from ..log import logger
+from ..model import Mode
 
 
 class Dispatcher:
-    def __init__(self, max_size):
-        self.queue = deque(maxlen=max_size)
-        self.current_time = 0
-        self.current_frame = 0
-        self.collect_results = {}
-
-    def get_size(self) -> int:
-        return len(self.queue)
+    def __init__(self, buffer: int):
+        self.queue = deque(maxlen=buffer)
+        self.current_position = 0
+        self.current_frame_index = 0
 
     def add_frame(self, frame):
         self.queue.append(frame)
-        self.current_frame += 1
+        self.current_frame_index += 1
 
     def get_frames(self, count: int, step: int) -> List[Any]:
         if step > 0:
@@ -29,45 +27,37 @@ class Dispatcher:
             raise ValueError("step must be positive or zero")
         return list(self.queue)[-count:]
 
-    def collect_result(self, inference_result):
-        if inference_result is not None:
-            time = str(inference_result[0])
-            name = inference_result[1]
-            data = inference_result[2]
-            if self.collect_results.get(name) is None:
-                self.collect_results[name] = {}
-            self.collect_results[name][time] = data
+    def collect(self, position: int, algo_name: str, result):
+        logger.debug(
+            f"[{position2time(position)}] collect {algo_name} result: {result}"
+        )
 
-    def clear_collect_results(self):
-        self.collect_results.clear()
+    def increase_current_position(self):
+        self.current_position += 1
+
+    def get_current_position(self) -> int:
+        return self.current_position
+
+    def set_current_position(self, time):
+        self.current_position = time
+
+    def get_current_frame_index(self) -> int:
+        return self.current_frame_index
+
+    def set_current_frame_index(self, frame):
+        self.current_frame_index = frame
 
     def clear(self):
         self.queue.clear()
-        self.collect_results.clear()
-        self.current_time = 0
-        self.current_frame = 0
-
-    def increase_current_time(self):
-        self.current_time += 1
-
-    def get_current_time(self) -> int:
-        return self.current_time
-
-    def set_current_time(self, time):
-        self.current_time = time
-
-    def get_current_frame(self) -> int:
-        return self.current_frame
-
-    def set_current_frame(self, frame):
-        self.current_frame = frame
+        self.current_position = 0
+        self.current_frame_index = 0
 
     @classmethod
-    def create(cls, max_size=30, offline=False):
-        if offline:
-            return cls(max_size)
+    def create(cls, mode: Mode = Mode.REALTIME, buffer: int = 30, **kwargs):
+        if mode in [Mode.OFFLINE, Mode.OFFLINE.value]:
+            return cls(buffer, **kwargs)
         else:
-            return DispatcherManager(cls).create(max_size)
+            return DispatcherManager(cls).create(buffer, **kwargs)
 
 
 class DispatcherManager:
@@ -76,13 +66,13 @@ class DispatcherManager:
         self._dispatcher = None
         self._obj = Dispatcher if obj is None else obj
 
-    def create(self, max_size: int):
+    def create(self, buffer: int, **kwargs):
         if self._manager is None:
-            self._initialize_manager(max_size)
+            self._initialize_manager(buffer, **kwargs)
         return self._dispatcher
 
-    def _initialize_manager(self, max_size):
+    def _initialize_manager(self, buffer, **kwargs):
         BaseManager.register("Dispatcher", self._obj)
         self._manager = BaseManager()
         self._manager.start()
-        self._dispatcher = self._manager.Dispatcher(max_size)
+        self._dispatcher = self._manager.Dispatcher(buffer, **kwargs)

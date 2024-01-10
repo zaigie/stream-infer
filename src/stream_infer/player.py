@@ -2,19 +2,28 @@ import time
 from tqdm import tqdm
 import multiprocessing as mp
 from multiprocessing.managers import BaseProxy
+from typing import Union
 
-from .util import trans_position2time
+from .dispatcher import Dispatcher
+from .producer import OpenCVProducer, PyAVProducer
+from .util import position2time
 from .log import logger
 
 
 class Player:
-    def __init__(self, dispatcher, producer, path, show_progress: bool = True):
+    def __init__(
+        self,
+        dispatcher: Union[Dispatcher, BaseProxy],
+        producer: Union[OpenCVProducer, PyAVProducer],
+        source: Union[str, int],
+        show_progress: bool = True,
+    ):
         self.dispatcher = dispatcher
         self.producer = producer
-        self.path = path
+        self.source = source
         self.show_progress = show_progress
         try:
-            self.info = self.producer.get_info(self.path)
+            self.info = self.producer.get_info(self.source)
         except Exception as e:
             raise ValueError(f"Error getting info: {e}")
         self.fps = self.info["fps"]
@@ -36,24 +45,24 @@ class Player:
             )
 
         if position > 0:
-            self.dispatcher.set_current_time(position)
-            self.dispatcher.set_current_frame(fps * position)
+            self.dispatcher.set_current_position(position)
+            self.dispatcher.set_current_frame_index(fps * position)
             if self.show_progress:
                 pbar.update(fps * position)
 
-        for frame in self.producer.read(self.path, fps, position):
+        for frame in self.producer.read(self.source, fps, position):
             self.dispatcher.add_frame(frame)
             interval_count += 1
             if interval_count >= fps:
                 interval_count = 0
-                self.dispatcher.increase_current_time()
+                self.dispatcher.increase_current_position()
                 if self.show_progress:
                     pbar.update(1)
                 else:
                     logger.debug(
-                        f"{self.get_play_time()}/{trans_position2time(self.info['total_seconds'])}"
+                        f"{self.get_play_time()}/{position2time(self.info['total_seconds'])}"
                     )
-            yield frame, self.dispatcher.get_current_frame()
+            yield frame, self.dispatcher.get_current_frame_index()
         if self.show_progress:
             pbar.close()
 
@@ -63,10 +72,10 @@ class Player:
         """
         if not isinstance(self.dispatcher, BaseProxy):
             logger.error(
-                f"Dispatcher is not an proxy: {type(self.dispatcher)}, use create(offline=False) to create"
+                f"Dispatcher is not an proxy: {type(self.dispatcher)}, use create(mode='realtime') to create"
             )
             raise ValueError(
-                f"Dispatcher is not an proxy: {type(self.dispatcher)}, use create(offline=False) to create"
+                f"Dispatcher is not an proxy: {type(self.dispatcher)}, use create(mode='realtime') to create"
             )
 
         if fps is None or fps >= self.fps:
@@ -100,7 +109,7 @@ class Player:
         )
 
     def get_play_time(self) -> str:
-        return trans_position2time(self.dispatcher.get_current_time())
+        return position2time(self.dispatcher.get_current_position())
 
     def video_stream(self):
         """
@@ -116,19 +125,19 @@ class Player:
                 leave=True,
                 unit="sec",
             )
-        for idx, frame in enumerate(self.producer.read(self.path, self.play_fps)):
+        for idx, frame in enumerate(self.producer.read(self.source, self.play_fps)):
             target_time = start_time + (idx * base_interval)
             time.sleep(max(0, target_time - time.time()))
             self.dispatcher.add_frame(frame)
             interval_count += 1
             if interval_count >= self.play_fps:
                 interval_count = 0
-                self.dispatcher.increase_current_time()
+                self.dispatcher.increase_current_position()
                 if self.show_progress:
                     pbar.update(1)
                 else:
                     logger.debug(
-                        f"{self.get_play_time()}/{trans_position2time(self.info['total_seconds'])}"
+                        f"{self.get_play_time()}/{position2time(self.info['total_seconds'])}"
                     )
         if self.show_progress:
             pbar.close()
@@ -138,9 +147,9 @@ class Player:
         """
         Handles streaming for non-video files. Frames are processed at regular intervals.
         """
-        for frame in self.producer.read(self.path, self.play_fps):
-            if self.dispatcher.get_current_frame() % self.play_fps == 0:
-                self.dispatcher.increase_current_time()
+        for frame in self.producer.read(self.source, self.play_fps):
+            if self.dispatcher.get_current_frame_index() % self.play_fps == 0:
+                self.dispatcher.increase_current_position()
                 logger.debug(f"{self.get_play_time()}")
             self.dispatcher.add_frame(frame)
 

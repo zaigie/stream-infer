@@ -1,21 +1,35 @@
 import threading as th
-import cv2
+from typing import Union, List
 
+from .dispatcher import Dispatcher
+from .algo import BaseAlgo
 from .player import Player
 from .recorder import Recorder
 from .timer import Timer
+from .model import Mode
 from .log import logger
 
 
 class Inference:
-    def __init__(self, dispatcher):
+    def __init__(self, dispatcher: Dispatcher):
         self.dispatcher = dispatcher
         self.inferences_info = []
         self.timers = {}
+
         self.is_stop = False
         self.process_func = self.default_process
 
-    def load_algo(self, algo_instance, frame_count, frame_step, interval):
+    def load_algo(
+        self,
+        algo_instance,
+        frame_count: int,
+        frame_step: int,
+        interval: Union[int, float],
+    ):
+        if not isinstance(algo_instance, BaseAlgo):
+            err = f"Algo instance must be an instance of `BaseAlgo`, but got {type(algo_instance)}"
+            logger.error(err)
+            raise ValueError(err)
         self.inferences_info.append((algo_instance, frame_count, frame_step, interval))
         self.timers[algo_instance.name] = Timer(interval, key=algo_instance.name)
         algo_instance.init()
@@ -45,15 +59,15 @@ class Inference:
     def stop(self):
         self.is_stop = True
 
-    def auto_run_specific(self, fps, current_frame) -> str:
+    def auto_run_specific(self, fps: int, current_frame_index: int) -> List[str]:
         current_algo_names = []
         for algo_instance, _, _, frequency in self.inferences_info:
-            if current_frame % int(frequency * fps) == 0:
+            if current_frame_index % int(frequency * fps) == 0:
                 self.run_specific(algo_instance.name)
                 current_algo_names.append(algo_instance.name)
         return current_algo_names
 
-    def run_specific(self, algo_name):
+    def run_specific(self, algo_name: str):
         for inference_info in self.inferences_info:
             algo_instance, _, _, _ = inference_info
             if algo_instance.name == algo_name:
@@ -65,32 +79,31 @@ class Inference:
         if not frames:
             return -1
         result = algo_instance.run(frames)
-        self.dispatcher.collect_result(
-            (self.dispatcher.get_current_time(), algo_instance.name, result)
+        self.dispatcher.collect(
+            self.dispatcher.get_current_position(), algo_instance.name, result
         )
-        return result
 
     def default_process(self, *args, **kwargs):
         pass
 
-    def set_custom_process(self, func):
-        def custom_process_wrapper(*args, **kwargs):
+    def process(self, func):
+        def wrapper(*args, **kwargs):
             return func(self, *args, **kwargs)
 
-        self.process_func = custom_process_wrapper
+        self.process_func = wrapper
 
     def start(
         self,
         player: Player,
         fps: int = 30,
         position: int = 0,
-        offline: bool = False,
+        mode: Mode = Mode.REALTIME,
         recording_path: str = None,
     ):
-        if offline:
+        if mode in [Mode.OFFLINE, Mode.OFFLINE.value]:
             recorder = Recorder(player, recording_path) if recording_path else None
-            for frame, current_frame in player.play(fps, position):
-                current_algo_names = self.auto_run_specific(fps, current_frame)
+            for frame, current_frame_index in player.play(fps, position):
+                current_algo_names = self.auto_run_specific(fps, current_frame_index)
                 processed_frame = self.process_func(
                     frame=frame, current_algo_names=current_algo_names
                 )

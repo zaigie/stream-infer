@@ -1,15 +1,10 @@
 import av
 import os
 import cv2
-from enum import Enum
+
 from .producer import OpenCVProducer, PyAVProducer
 from .player import Player
-
-
-class RecordMode(Enum):
-    NONE = 0
-    OPENCV = 1
-    PYAV = 2
+from .model import RecordMode
 
 
 class Recorder:
