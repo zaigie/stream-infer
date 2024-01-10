@@ -95,7 +95,7 @@ Real-time inference is not suitable for the development phase but is often used 
 View and run the demo:
 
 - General Operation: [examples/realtime_general.py](https://github.com/zaigie/stream_infer/blob/main/examples/realtime_general.py)
-- Set up the handler and manually print the inference result: [examples/realtime_custom_process.pu](https://github.com/zaigie/stream_infer/blob/main/examples/realtime_custom_process.py)
+- Set up the handler and manually print the inference result: [examples/realtime_custom_process.py](https://github.com/zaigie/stream_infer/blob/main/examples/realtime_custom_process.py)
 
 ### Dynamic Execution
 

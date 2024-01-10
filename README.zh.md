@@ -95,7 +95,7 @@ https://github.com/zaigie/stream_infer/assets/17232619/32aef0c9-89c7-4bc8-9dd6-2
 查看及运行 demo：
 
 - 常规运行：[examples/realtime_general.py](https://github.com/zaigie/stream_infer/blob/main/examples/realtime_general.py)
-- 设置处理函数并手动打印推理结果：[examples/realtime_custom_process.pu](https://github.com/zaigie/stream_infer/blob/main/examples/realtime_custom_process.py)
+- 设置处理函数并手动打印推理结果：[examples/realtime_custom_process.py](https://github.com/zaigie/stream_infer/blob/main/examples/realtime_custom_process.py)
 
 ### 动态执行
 
