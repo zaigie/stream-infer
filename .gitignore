@@ -166,7 +166,6 @@ cython_debug/
 #.idea/
 
 outputs/
-algos/
 test.py
 *.pt
 *.mp4

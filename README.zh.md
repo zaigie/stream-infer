@@ -66,10 +66,13 @@ https://github.com/zaigie/stream_infer/assets/17232619/32aef0c9-89c7-4bc8-9dd6-2
 - 手术视频复盘
 - ...
 
-在这里查看及运行 demo：[examples/offline.py](https://github.com/zaigie/stream_infer/blob/main/examples/offline.py)
+查看及运行 demo：
+
+- 常规运行：[examples/offline_general.py](https://github.com/zaigie/stream_infer/blob/main/examples/offline_general.py)
+- 设置处理函数处理帧和推理结果，并用 cv2 展示及录制：[examples/offline_custom_process_record.py](https://github.com/zaigie/stream_infer/blob/main/examples/offline_custom_process_record.py)
 
 > [!WARNING]
-> 示例中使用了 OpenCV GUI 相关的功能，如展示窗口等，若要使用可以手动安装 opencv-python 或 opencv-contrib-python，亦或者：
+> 在 `offline_custom_process_record.py` 中使用了 OpenCV GUI 相关的功能，如展示窗口等，若要使用可以手动安装 opencv-python 或 opencv-contrib-python，亦或者：
 >
 > `pip install -U stream-infer[desktop]`
 
@@ -89,7 +92,10 @@ https://github.com/zaigie/stream_infer/assets/17232619/32aef0c9-89c7-4bc8-9dd6-2
 - 临床手术
 - ...
 
-在这里查看及运行 demo：[examples/realtime.py](https://github.com/zaigie/stream_infer/blob/main/examples/realtime.py)
+查看及运行 demo：
+
+- 常规运行：[examples/realtime_general.py](https://github.com/zaigie/stream_infer/blob/main/examples/realtime_general.py)
+- 设置处理函数并手动打印推理结果：[examples/realtime_custom_process.pu](https://github.com/zaigie/stream_infer/blob/main/examples/realtime_custom_process.py)
 
 ### 动态执行
 
@@ -97,7 +103,7 @@ https://github.com/zaigie/stream_infer/assets/17232619/32aef0c9-89c7-4bc8-9dd6-2
 
 该模式主要可用于推理服务器的开发，通过 REST/gRPC 或其它方式传入结构化数据即可启动一个推理任务。
 
-在这里查看及运行 demo：[examples/dynamic.py](https://github.com/zaigie/stream_infer/blob/main/examples/dynamic.py)
+查看及运行 demo：[examples/dynamic_app.py](https://github.com/zaigie/stream_infer/blob/main/examples/dynamic_app.py)
 
 ### 可视化开发&调试
 
@@ -113,10 +119,10 @@ https://github.com/zaigie/stream_infer/assets/17232619/6cbd6858-0292-4759-8d4c-a
 pip install -U 'stream-infer[server]'
 ```
 
-在这里查看及运行 demo：[examples/streamlit_dev.py](https://github.com/zaigie/stream_infer/blob/main/examples/streamlit_dev.py)
+查看及运行 demo：[examples/streamlit_app.py](https://github.com/zaigie/stream_infer/blob/main/examples/streamlit_app.py)
 
 ```bash
-streamlit run streamlit_dev.py
+streamlit run streamlit_app.py
 ```
 
 ## 模块
@@ -171,7 +177,7 @@ class HeadDetectionAlgo(BaseAlgo):
 
 Dispatcher 是播放和推理的中心服务，用来缓存推理帧、分发推理帧以及收集推理时间、结果数据。
 
-Dispatcher 提供了帧以及时间的增加/获取函数。
+Dispatcher 提供了帧以及时间的增加/获取函数。Stream Infer 内置了一个 [DevelopDispatcher](https://github.com/zaigie/stream_infer/blob/main/stream_infer/dispatcher/develop.py) 用于手动存储并获取推理结果。
 
 其它的您不用在意，但是为了让您能获取到结果并方便地打印、存储于其它位置，您需要关注 `collect()` 函数，它的源码实现如下：
 
@@ -318,7 +324,7 @@ inference.start(player, fps=fps, position=0, mode="offline", recording_path="./p
 
 目前，录制的视频只支持 mp4 格式，当您使用 `OpenCVProducer` 时，录制的是 mp4v 编码的文件，而在`PyAVProduer`下则是 h264 编码的 mp4 文件，我们更推荐您使用 `PyAVProducer`，因为它有更好的压缩率。
 
-关于具体的使用您可以分别参考 [examples/offline.py](https://github.com/zaigie/stream_infer/blob/main/examples/offline.py) 和 [examples/realtime.py](https://github.com/zaigie/stream_infer/blob/main/examples/realtime.py) 的示例代码。
+关于具体的使用您可以分别参考 [examples/offline_custom_process_record.py](https://github.com/zaigie/stream_infer/blob/main/examples/offline_custom_process_record.py) 和 [examples/realtime_custom_process.py](https://github.com/zaigie/stream_infer/blob/main/examples/realtime_custom_process.py) 的示例代码。
 
 ## 许可证
 

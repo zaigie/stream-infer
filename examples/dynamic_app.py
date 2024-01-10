@@ -2,8 +2,8 @@ from stream_infer.dynamic import DynamicApp
 from stream_infer.log import logger
 
 config = {
-    "mode": "realtime",
-    "source": "/path/to/your/classroom.mp4",
+    "mode": "offline",
+    "source": "./classroom.mp4",
     "fps": 30,
     "dispatcher": {
         "module": "stream_infer.dispatcher",
@@ -12,7 +12,7 @@ config = {
     },
     "algos": [
         {
-            "module": "/path/to/your/algos.py",
+            "module": "./algos/yolo.py",
             "name": "YoloDetectionAlgo2",
             "args": {
                 "frame_count": 1,

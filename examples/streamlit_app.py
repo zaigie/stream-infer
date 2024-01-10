@@ -1,22 +1,16 @@
 import cv2
-
 from stream_infer import Inference, StreamlitApp
 from stream_infer.dispatcher import DevelopDispatcher
-
 from algos import YoloDetectionAlgo, PoseDetectionAlgo
 
 dispatcher = DevelopDispatcher.create(mode="offline", buffer=5)
 inference = Inference(dispatcher)
-inference.load_algo(
-    YoloDetectionAlgo("things"), frame_count=1, frame_step=0, interval=1
-)
-inference.load_algo(
-    PoseDetectionAlgo("pose"), frame_count=1, frame_step=0, interval=0.1
-)
+inference.load_algo(YoloDetectionAlgo("things"), 1, 0, 1)
+inference.load_algo(PoseDetectionAlgo("pose"), 1, 0, 0.1)
 app = StreamlitApp(inference)
 
 
-# Set a frame annotation function(optional)
+# Set frame annotation func
 @app.annotate_frame
 def annotate_frame(app: StreamlitApp, name, data, frame):
     if name == "pose":
@@ -47,7 +41,7 @@ def annotate_frame(app: StreamlitApp, name, data, frame):
     return frame
 
 
-# Set an output function(optional)
+# Set output display func
 @app.output
 def output(app: StreamlitApp, name, position, data):
     if data is None:
@@ -72,4 +66,4 @@ def output(app: StreamlitApp, name, position, data):
         app.output_widgets[name].text(f"{position}: {things}")
 
 
-app.start(producer_type="pyav", clear=False)
+app.start(producer_type="pyav", clear=False)  # options: opencv, pyav
