@@ -33,6 +33,7 @@ If you have the above requirements, then a simple Stream Infer can meet all your
   - Real-time inference separates frame fetching from inference and generates large or small delays depending on the performance of the processing device
 - Offline inference supports recording video files to a local disk
 - Supports visual development and debugging on local/remote servers via [streamlit](https://github.com/streamlit/streamlit)
+- Support parameterized dynamic call, easy inference server development
 - Modules are low-coupled, with clear division of labor
 
 ## Installation
@@ -90,6 +91,14 @@ Real-time inference is not suitable for the development phase but is often used 
 
 View and run the demo here: [examples/realtime.py](https://github.com/zaigie/stream_infer/blob/main/examples/realtime.py)
 
+### Dynamic Execution
+
+Leveraging Python's reflection and dynamic import capabilities, it supports configuring all the parameters required for inference tasks through JSON.
+
+This mode is mainly useful for the development of inference servers, where structured data can be passed in via REST/gRPC or other methods to initiate an inference task.
+
+Check out and run the demo here: [examples/dynamic.py](https://github.com/zaigie/stream_infer/blob/main/examples/dynamic.py)
+
 ### Visualization Development & Debugging
 
 https://github.com/zaigie/stream_infer/assets/17232619/6cbd6858-0292-4759-8d4c-ace154567f8e
@@ -106,10 +115,10 @@ To run this feature, install the server version:
 pip install -U 'stream-infer[server]'
 ```
 
-View and run the demo here: [examples/server.py](https://github.com/zaigie/stream_infer/blob/main/examples/server.py)
+View and run the demo here: [examples/streamlit_dev.py](https://github.com/zaigie/stream_infer/blob/main/examples/streamlit_dev.py)
 
 ```bash
-streamlit run server.py
+streamlit run streamlit_dev.py
 ```
 
 ## Modules
@@ -148,7 +157,7 @@ class HeadDetectionAlgo(BaseAlgo):
         self.head_detection = pipeline(Tasks.domain_specific_object_detection, model=model_id)
 
     def run(self, frames):
-        return self.head_detection(frames)
+        return self.head_detection(frames[0])
 ```
 
 This way, you have completed the encapsulation and can call it normally in the future.
@@ -164,71 +173,68 @@ This way, you have completed the encapsulation and can call it normally in the f
 
 Dispatcher is the central service for playing and inferring, used to cache inference frames, distribute inference frames, and collect inference time and result data.
 
-Dispatcher provides functions for adding/getting frames, adding/getting inference results and times.
+Dispatcher provides functions for adding/getting frames and position.
 
-You don't need to worry about other aspects, but to enable you to retrieve results and conveniently print or store them elsewhere, you should pay attention to the `collect_result()` function, implemented as follows:
+You don't need to worry about other aspects, but to enable you to retrieve results and conveniently print or store them elsewhere, you should pay attention to the `collect()` function, implemented as follows:
 
 ```python
-def collect_result(self, inference_result):
-    if inference_result is not None:
-        time = str(inference_result[0])
-        name = inference_result[1]
-        data = inference_result[2]
-        if self.collect_results.get(name) is None:
-            self.collect_results[name] = {}
-        self.collect_results[name][time] = data
-```
-
-Here, `inference_result` is the original result returned from inference, and the final `collect_results` format is roughly as follows:
-
-```json
-{
-  "HeadDetectionAlgo": {
-    "1": { "scores": [], "boxes": [] },
-    "2": { "scores": [], "boxes": [] }
-  },
-  "other": {
-    "60": { "a": 1 },
-    "120": { "a": 2 }
-  }
-}
+def collect(self, position: int, algo_name: str, result):
+    logger.debug(f"[{position}] collect {algo_name} result: {result}")
 ```
 
 Based on this, if you wish to request the results to a REST service or perform other operations on existing data before the request, you can achieve this by **inheriting the Dispatcher class** and rewriting functions:
+
+**Collect results to Redis**
+
+```python
+class RedisDispatcher(Dispatcher):
+    def __init__(
+        self, buffer: int, host: str = "localhost", port: int = 6379, db: int = 0
+    ):
+        super().__init__(buffer)
+        self.conn = redis.Redis(host=host, port=port, db=db)
+
+    def collect(self, position: int, algo_name: str, result):
+        key = f"results:{algo_name}"
+        self.conn.zadd(key, {result: position})
+```
+
+**Request results to REST**
 
 ```python
 from stream_infer.dispatcher import Dispatcher
 import requests
 ...
 class RequestDispatcher(Dispatcher):
-    def __init__(self, max_size):
-        super().__init__(max_size)
+    def __init__(self, buffer):
+        super().__init__(buffer)
         self.sess = requests.Session()
         ...
 
-    def collect_result(self, inference_result):
-        super().__init__(inference_result)
+    def collect(self, position: int, algo_name: str, result):
         req_data = {
-            "time": inference_result[0]
-            "name": inference_result[1]
-            "data": inference_result[2]
+            "position": position
+            "algo_name": algo_name
+            "result": result
         }
         self.sess.post("http://xxx.com/result/", json=req_data)
-...
-
-# Offline inference
-dispatcher = RequestDispatcher.create(offline=True, max_size=30)
-
-# Real-time inference
-dispatcher = RequestDispatcher.create(max_size=15)
 ```
 
-You may have noticed that the instantiation of dispatcher differs between offline and real-time inference. This is because **in real-time inference, playback and inference are not in the same process**, and both need to share the same dispatcher, only the offline parameter has been changed, but the internal implementation uses the DispatcherManager agent.
+Then instantiate:
+
+```python
+# Offline inference
+dispatcher = RequestDispatcher.create(mode="offline", buffer=30)
+# Real-time inference
+dispatcher = RedisDispatcher.create(buffer=15, host="localhost", port=6379, db=1)
+```
+
+You may have noticed that the instantiation of dispatcher differs between offline and real-time inference. This is because **in real-time inference, playback and inference are not in the same process**, and both need to share the same dispatcher, only the mode parameter has been changed, but the internal implementation uses the DispatcherManager agent.
 
 > [!CAUTION]
-> For the `max_size` parameter, the default value is 30, which keeps the latest 30 frames of ndarray data in the buffer. **The larger this parameter, the more memory the program occupies!**
+> For the `buffer` parameter, the default value is 30, which keeps the latest 30 frames of ndarray data in the buffer. **The larger this parameter, the more memory the program occupies!**
 >
-> It is recommended to set it to `max_size = max(frame_count * (frame_step if frame_step else 1))` based on the actual inference interval.
+> It is recommended to set it to `buffer = max(frame_count * (frame_step if frame_step else 1))` based on the actual inference interval.
 
 ### Inference
 
@@ -289,7 +295,7 @@ from stream_infer import Player
 
 ...
 
-player = Player(dispatcher, producer, video_path, show_progress)
+player = Player(dispatcher, producer, source, show_progress)
 ```
 
 The `show_progress` parameter defaults to True, in which case the tqdm is used to display the progress bar. When set to False, progress is printed through the logger.
@@ -299,15 +305,18 @@ The `show_progress` parameter defaults to True, in which case the tqdm is used t
 Simply run the entire script through Inference's `start()`.
 
 ```python
-inference.start(player, fps=fps, position=0, offline=True, recording_path="./processed.mp4")
+inference.start(player, fps=fps, position=0, mode="offline", recording_path="./processed.mp4")
 ```
 
 - fps: Indicates the desired playback frame rate. **If the frame rate of the video source is higher than this number, it will skip frames through frame skipping logic to forcibly play at this specified frame rate**, thereby saving performance to some extent.
 - position: Accepts a parameter in seconds, which can specify the start position for inference (only available in offline inference; how could you specify a position in real-time inference, right?).
-- offline: The default is False, whether it is offline inference, when you want to run real-time inference, no parameters can be passed.
+- mode: The default is `realtime`.
 - recording_path: After this parameter is added, the processed frame can be recorded into a new video file under offline inference.
 
-It is worth mentioning that during the inference process, you may need to process the frames or inference results. We provide the `set_custom_process()` function to facilitate this purpose.
+It should be specifically noted that during the inference process, you may need to process the frames or inference results. We provide a `process` decorator and function to facilitate this purpose.
+
+> [!WARNING]
+> In a real-time inference environment, due to the reason of running multiple processes, it is not possible to use a decorator to set up the process procedure
 
 Currently, the recorded videos only support the mp4 format. When you use `OpenCVProducer`, the files are encoded in mp4v, while under `PyAVProducer`, they are encoded in h264 mp4 format. We recommend using `PyAVProducer` as it offers a better compression rate.
 

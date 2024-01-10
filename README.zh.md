@@ -33,6 +33,7 @@ Stream Infer 是一个为视频处理应用中的流式推理设计的 Python �
   - 实时推理将取帧与推理分开，依赖处理设备的性能产生或大或小的延迟
 - 离线推理支持录制视频文件到本地磁盘
 - 支持通过 [streamlit](https://github.com/streamlit/streamlit) 在本地/远程服务器上可视化开发和调试
+- 支持参数化动态调用，便于推理服务器开发
 - 模块低耦合，分工明确
 
 ## 安装
@@ -90,6 +91,14 @@ https://github.com/zaigie/stream_infer/assets/17232619/32aef0c9-89c7-4bc8-9dd6-2
 
 在这里查看及运行 demo：[examples/realtime.py](https://github.com/zaigie/stream_infer/blob/main/examples/realtime.py)
 
+### 动态执行
+
+利用 Python 的反射与动态导入能力，支持通过 JSON 配置推理任务所需要的所有参数。
+
+该模式主要可用于推理服务器的开发，通过 REST/gRPC 或其它方式传入结构化数据即可启动一个推理任务。
+
+在这里查看及运行 demo：[examples/dynamic.py](https://github.com/zaigie/stream_infer/blob/main/examples/dynamic.py)
+
 ### 可视化开发&调试
 
 https://github.com/zaigie/stream_infer/assets/17232619/6cbd6858-0292-4759-8d4c-ace154567f8e
@@ -104,10 +113,10 @@ https://github.com/zaigie/stream_infer/assets/17232619/6cbd6858-0292-4759-8d4c-a
 pip install -U 'stream-infer[server]'
 ```
 
-在这里查看及运行 demo：[examples/server.py](https://github.com/zaigie/stream_infer/blob/main/examples/server.py)
+在这里查看及运行 demo：[examples/streamlit_dev.py](https://github.com/zaigie/stream_infer/blob/main/examples/streamlit_dev.py)
 
 ```bash
-streamlit run server.py
+streamlit run streamlit_dev.py
 ```
 
 ## 模块
@@ -146,7 +155,7 @@ class HeadDetectionAlgo(BaseAlgo):
         self.head_detection = pipeline(Tasks.domain_specific_object_detection, model=model_id)
 
     def run(self, frames):
-        return self.head_detection(frames)
+        return self.head_detection(frames[0])
 ```
 
 这样，你就完成了封装，并在以后能够正常调用它。
@@ -162,71 +171,68 @@ class HeadDetectionAlgo(BaseAlgo):
 
 Dispatcher 是播放和推理的中心服务，用来缓存推理帧、分发推理帧以及收集推理时间、结果数据。
 
-Dispatcher 提供了帧的增加/获取函数、推理结果以及时间的增加/获取函数。
+Dispatcher 提供了帧以及时间的增加/获取函数。
 
-其它的您不用在意，但是为了让您能获取到结果并方便地打印、存储于其它位置，您需要关注 `collect_result()` 函数，它的源码实现如下：
+其它的您不用在意，但是为了让您能获取到结果并方便地打印、存储于其它位置，您需要关注 `collect()` 函数，它的源码实现如下：
 
 ```python
-def collect_result(self, inference_result):
-    if inference_result is not None:
-        time = str(inference_result[0])
-        name = inference_result[1]
-        data = inference_result[2]
-        if self.collect_results.get(name) is None:
-            self.collect_results[name] = {}
-        self.collect_results[name][time] = data
+def collect(self, position: int, algo_name: str, result):
+    logger.debug(f"[{position}] collect {algo_name} result: {result}")
 ```
 
-其中 `inference_result` 是推理返回的原始结果，最终收集到的 `collect_results` 格式大致如下：
+在此基础上，若您想要将结果请求到 REST 服务，或者在请求前对现有数据做其它操作，都可以通过 **继承 Dispatcher 类** 并重写函数的方式实现。
 
-```json
-{
-  "HeadDetectionAlgo": {
-    "1": { "scores": [], "boxes": [] },
-    "2": { "scores": [], "boxes": [] }
-  },
-  "other": {
-    "60": { "a": 1 },
-    "120": { "a": 2 }
-  }
-}
+**收集结果到 Redis**
+
+```python
+class RedisDispatcher(Dispatcher):
+    def __init__(
+        self, buffer: int, host: str = "localhost", port: int = 6379, db: int = 0
+    ):
+        super().__init__(buffer)
+        self.conn = redis.Redis(host=host, port=port, db=db)
+
+    def collect(self, position: int, algo_name: str, result):
+        key = f"results:{algo_name}"
+        self.conn.zadd(key, {result: position})
 ```
 
-在此基础上，若您想要将结果请求到 REST 服务，或者在请求前对现有数据做其它操作，都可以通过 **继承 Dispatcher 类** 并重写函数的方式实现：
+**请求结果到 REST**
 
 ```python
 from stream_infer.dispatcher import Dispatcher
 import requests
 ...
 class RequestDispatcher(Dispatcher):
-    def __init__(self, max_size):
-        super().__init__(max_size)
+    def __init__(self, buffer):
+        super().__init__(buffer)
         self.sess = requests.Session()
         ...
 
-    def collect_result(self, inference_result):
-        super().__init__(inference_result)
+    def collect(self, position: int, algo_name: str, result):
         req_data = {
-            "time": inference_result[0]
-            "name": inference_result[1]
-            "data": inference_result[2]
+            "position": position
+            "algo_name": algo_name
+            "result": result
         }
         self.sess.post("http://xxx.com/result/", json=req_data)
-...
-
-# 离线推理
-dispatcher = RequestDispatcher.create(offline=True, max_size=30)
-
-# 实时推理
-dispatcher = RequestDispatcher.create(max_size=15)
 ```
 
-您可能注意到，在离线推理和实时推理下实例化 dispatcher 的方式不同，这是因为 **实时推理下播放与推理不在一个进程中** ，而两者都需要共享同一个 dispatcher，虽然只是改变了 offline 参数，但其内部实现使用了 DispatcherManager 代理。
+然后实例化：
+
+```python
+# 离线推理
+dispatcher = RequestDispatcher.create(mode="offline", buffer=30)
+# 实时推理
+dispatcher = RedisDispatcher.create(buffer=15, host="localhost", port=6379, db=1)
+```
+
+您可能注意到，在离线推理和实时推理下实例化 dispatcher 的方式不同，这是因为 **实时推理下播放与推理不在一个进程中** ，而两者都需要共享同一个 dispatcher，虽然只是改变了 mode 参数，但其内部实现使用了 DispatcherManager 代理。
 
 > [!CAUTION]
-> 对于 `max_size`参数，默认值为 30，会将最新的 30 帧 ndarray 数据存在缓冲区中，**该参数越大，程序占用的内存就越大！**
+> 对于 `buffer`参数，默认值为 30，会将最新的 30 帧 ndarray 数据存在缓冲区中，**该参数越大，程序占用的内存就越大！**
 >
-> 建议根据实际推理间隔情况设置为 `max_size = max(frame_count * (frame_step if frame_step else 1))`
+> 建议根据实际推理间隔情况设置为 `buffer = max(frame_count * (frame_step if frame_step else 1))`
 
 ### Inference
 
@@ -287,7 +293,7 @@ from stream_infer import Player
 
 ...
 
-player = Player(dispatcher, producer, video_path, show_progress)
+player = Player(dispatcher, producer, source, show_progress)
 ```
 
 `show_progress` 参数默认为 True，此时会使用 tqdm 显示进度条，而设置为 False 时会通过 logger 打印。
@@ -297,15 +303,18 @@ player = Player(dispatcher, producer, video_path, show_progress)
 通过 Inference 的 `start()` 即可简单运行整个脚本
 
 ```python
-inference.start(player, fps=fps, position=0, offline=True, recording_path="./processed.mp4")
+inference.start(player, fps=fps, position=0, mode="offline", recording_path="./processed.mp4")
 ```
 
 - fps：表示期望播放帧率，**如果视频源的帧率大于这个数，将会由跳帧逻辑进行跳帧，强行播放这个指定的帧率**，一定程度上节省性能。
 - position：接收一个以秒为单位的参数，可以指定开始推理的位置（仅离线推理下可用，实时推理怎么可能指定位置呢对吧？）。
-- offline：默认为 False，是否为离线推理，当你想运行实时推理，不传参数即可。
+- mode：默认为 `realtime`。
 - recording_path：添加此参数后，在离线推理下可以录制处理后的帧到新的视频文件中。
 
-需要特别提到的是，在推理过程中，您可能需要对帧或推理结果进行处理，我们提供了 `set_custom_process()` 函数方便您完成这个目的。
+需要特别提到的是，在推理过程中，您可能需要对帧或推理结果进行处理，我们提供了 `process` 装饰器和函数方便您完成这个目的。
+
+> [!WARNING]
+> 实时推理环境下，因为多进程运行的原因，不能使用装饰器设置 process 过程
 
 目前，录制的视频只支持 mp4 格式，当您使用 `OpenCVProducer` 时，录制的是 mp4v 编码的文件，而在`PyAVProduer`下则是 h264 编码的 mp4 文件，我们更推荐您使用 `PyAVProducer`，因为它有更好的压缩率。
 
