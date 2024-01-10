@@ -1,24 +1,20 @@
-import os
 import streamlit as st
 from .inference import Inference
 from .player import Player
 from .producer import OpenCVProducer, PyAVProducer
-from .util import trans_position2time
+from .util import position2time
+from .model import ProducerType
 from .log import logger
 
 
-class StreamInferApp:
-    def __init__(self, inference: Inference, save_output_path: str = "./outputs"):
+class StreamlitApp:
+    def __init__(self, inference: Inference):
         if not isinstance(inference, Inference):
             logger.error("inference must be an instance of Inference")
             return
         self.inference = inference
-        self.save_output_path = save_output_path
         self.setup_ui()
         self.setup_output_ui()
-        if self.need_save:
-            if not os.path.exists(save_output_path):
-                os.makedirs(save_output_path)
         self.annotate_frame_func = self.default_annotate_frame
         self.output_func = self.default_output
 
@@ -40,7 +36,7 @@ class StreamInferApp:
 
         with st.sidebar:
             st.header("参数控制")
-            self.video_path = st.text_input(
+            self.source = st.text_input(
                 "流URL或视频路径",
                 placeholder="网络流地址/绝对路径",
                 disabled=self.get_state("input_disabled", bool),
@@ -53,7 +49,7 @@ class StreamInferApp:
                 "推理高度", 180, 1080, 1080, disabled=self.get_state("input_disabled", bool)
             )
             self.frame_rate = st.slider(
-                "帧率", 1, 60, 30, disabled=self.get_state("input_disabled", bool)
+                "帧率", 1, 60, 10, disabled=self.get_state("input_disabled", bool)
             )
             self.color_channel = st.selectbox(
                 "颜色通道", ("BGR", "RGB"), disabled=self.get_state("input_disabled", bool)
@@ -68,9 +64,6 @@ class StreamInferApp:
             )
             self.show_output = st.toggle(
                 "展示推理数据", disabled=self.get_state("control_disabled", bool)
-            )
-            self.need_save = st.toggle(
-                "保存推理结果", value=True, disabled=self.get_state("control_disabled", bool)
             )
 
             st.button(
@@ -88,8 +81,6 @@ class StreamInferApp:
                 )
 
         st.header("推理结果")
-        if self.need_save:
-            st.caption("结果将保存到 ./outputs 文件夹")
         if self.show_frame:
             self.image_frame = st.image([])
         self.video_progress = st.progress(0, text="视频待加载")
@@ -103,7 +94,7 @@ class StreamInferApp:
         st.session_state[key] = value
 
     def start_infer(self):
-        if not self.video_path:
+        if not self.source:
             st.error("请输入视频路径")
             return
         self.set_state("control_disabled", True)
@@ -124,24 +115,22 @@ class StreamInferApp:
             output += "=======================================\n\n\n"
         return output
 
-    def save_output(self):
-        for algo_name in self.inference.list_algos():
-            result = self.inference.dispatcher.get_result(algo_name)
-            if result is None:
-                result = ""
-            path = os.path.join(self.save_output_path, f"{algo_name}.log")
-            with open(path, "w+", encoding="utf-8") as f:
-                f.write(self.fmt_output(result))
-
-    def run_inference(self, use_opencv: bool = True, clear: bool = False):
-        if use_opencv:
+    def run_inference(
+        self, producer_type: ProducerType = ProducerType.OPENCV, clear: bool = False
+    ):
+        if producer_type in [ProducerType.OPENCV, ProducerType.OPENCV.value]:
             producer = OpenCVProducer(self.width, self.height)
-        else:
+        elif producer_type in [ProducerType.PYAV, ProducerType.PYAV.value]:
             producer = PyAVProducer(self.width, self.height)
+        else:
+            err = f"Unsupported producer type: {producer_type}"
+            logger.error(err)
+            raise ValueError(err)
+
         player = Player(
             self.inference.dispatcher,
             producer,
-            path=self.video_path,
+            source=self.source,
             show_progress=False,
         )
 
@@ -149,7 +138,7 @@ class StreamInferApp:
         is_realtime = video_info["frame_count"] <= 0
         if not is_realtime:
             total_sec = int(video_info["frame_count"] / video_info["fps"])
-            total_sec_display = trans_position2time(total_sec)
+            total_sec_display = position2time(total_sec)
             self.video_progress.progress(0, text=f"00:00:00 / {total_sec_display}")
             temp_current_time = 0
         else:
@@ -158,12 +147,12 @@ class StreamInferApp:
         for frame, current_frame in player.play(
             self.frame_rate, position=self.start_position
         ):
-            now_current_time = self.inference.dispatcher.get_current_time()
+            now_current_time = self.inference.dispatcher.get_current_position()
             if not is_realtime and now_current_time != temp_current_time:
                 temp_current_time = now_current_time
                 self.video_progress.progress(
                     temp_current_time / total_sec,
-                    text=f"{trans_position2time(temp_current_time)} / {total_sec_display}",
+                    text=f"{position2time(temp_current_time)} / {total_sec_display}",
                 )
 
             current_algo_names = self.inference.auto_run_specific(
@@ -188,8 +177,6 @@ class StreamInferApp:
                         display_frame = frame
                     yield current_algo_name, position, data, display_frame
 
-        if self.need_save:
-            self.save_output()
         self.stop_infer()
         if clear:
             self.inference.dispatcher.clear()
@@ -200,27 +187,29 @@ class StreamInferApp:
     def default_annotate_frame(self, name, data, frame):
         return frame
 
-    def set_annotate_frame(self, func):
-        def custom_annotate_frame_wrapper(name, data, frame):
+    def annotate_frame(self, func):
+        def wrapper(name, data, frame):
             return func(self, name, data, frame)
 
-        self.annotate_frame_func = custom_annotate_frame_wrapper
+        self.annotate_frame_func = wrapper
 
     def default_output(self, name, position, data):
         self.output_widgets[name].text(f"{position}: {data}")
 
-    def set_output(self, func):
-        def custom_output_wrapper(name, position, data):
+    def output(self, func):
+        def wrapper(name, position, data):
             return func(self, name, position, data)
 
-        self.output_func = custom_output_wrapper
+        self.output_func = wrapper
 
-    def start(self, use_opencv: bool = True, clear: bool = False):
+    def start(
+        self, producer_type: ProducerType = ProducerType.OPENCV, clear: bool = False
+    ):
         if self.get_state("mode") != "infering":
             st.stop()
 
         for current_algo_name, position, data, frame in self.run_inference(
-            use_opencv=use_opencv, clear=clear
+            producer_type=producer_type, clear=clear
         ):
             if self.show_frame and frame is not None:
                 self.image_frame.image(frame, channels=self.color_channel)
