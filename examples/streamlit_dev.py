@@ -1,43 +1,24 @@
-from stream_infer import Inference, StreamInferApp
-from stream_infer.dispatcher import DevelopDispatcher
-from stream_infer.algo import BaseAlgo
-from stream_infer.log import logger
-
-import os
 import cv2
 
-os.environ["YOLO_VERBOSE"] = str(False)
+from stream_infer import Inference, StreamlitApp
+from stream_infer.dispatcher import DevelopDispatcher
 
-from ultralytics import YOLO
+from algos import YoloDetectionAlgo, PoseDetectionAlgo
 
-
-class YoloDetectionAlgo(BaseAlgo):
-    def init(self):
-        self.model = YOLO("yolov8n.pt")
-
-    def run(self, frames):
-        try:
-            result = self.model(frames[0])
-            return result[0]
-        except Exception as e:
-            logger.error(e)
-            return None
+dispatcher = DevelopDispatcher.create(mode="offline", buffer=5)
+inference = Inference(dispatcher)
+inference.load_algo(
+    YoloDetectionAlgo("things"), frame_count=1, frame_step=0, interval=1
+)
+inference.load_algo(
+    PoseDetectionAlgo("pose"), frame_count=1, frame_step=0, interval=0.1
+)
+app = StreamlitApp(inference)
 
 
-class PoseDetectionAlgo(BaseAlgo):
-    def init(self):
-        self.model = YOLO("yolov8n-pose.pt")
-
-    def run(self, frames):
-        try:
-            result = self.model(frames[0])
-            return result[0]
-        except Exception as e:
-            logger.error(e)
-            return None
-
-
-def annotate_frame(app: StreamInferApp, name, data, frame):
+# Set a frame annotation function(optional)
+@app.annotate_frame
+def annotate_frame(app: StreamlitApp, name, data, frame):
     if name == "pose":
         keypoints = data.keypoints
         for person in keypoints.data:
@@ -66,7 +47,9 @@ def annotate_frame(app: StreamInferApp, name, data, frame):
     return frame
 
 
-def output(app: StreamInferApp, name, position, data):
+# Set an output function(optional)
+@app.output
+def output(app: StreamlitApp, name, position, data):
     if data is None:
         return
     things = [data.names[box.cls[0].int().item()] for box in data.boxes]
@@ -89,16 +72,4 @@ def output(app: StreamInferApp, name, position, data):
         app.output_widgets[name].text(f"{position}: {things}")
 
 
-if __name__ == "__main__":
-    dispatcher = DevelopDispatcher.create(max_size=5, offline=True)
-    inference = Inference(dispatcher)
-    inference.load_algo(
-        YoloDetectionAlgo("things"), frame_count=1, frame_step=0, interval=1
-    )
-    inference.load_algo(
-        PoseDetectionAlgo("pose"), frame_count=1, frame_step=0, interval=0.1
-    )
-    app = StreamInferApp(inference)
-    app.set_annotate_frame(annotate_frame)
-    app.set_output(output)
-    app.start(use_opencv=True, clear=False)  # use_opencv for use OpenCVProducer
+app.start(producer_type="pyav", clear=False)
