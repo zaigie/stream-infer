@@ -9,22 +9,22 @@ class OpenCVProducer:
         self.height = height
         self.cvt_code = cvt_code
 
-    def read(self, path, fps=None, position=0):
+    def read(self, source, fps=None, position=0):
         """
         Reads frames from a video file/stream_url/v4l2 device.
         Optionally skips frames to meet the specified fps.
 
         Args:
-            path (str): The path to the video file/stream_url/v4l2 device.
+            source (str): The path to the video file/stream_url/v4l2 device.
             fps (int, optional): Target frames per second. If None, no frame skipping is done.
             position (int, optional): The position in seconds from where to start reading the video.
 
         Yields:
             numpy.ndarray: frame
         """
-        cap = cv2.VideoCapture(path)
+        cap = cv2.VideoCapture(source)
         if not cap.isOpened():
-            raise ValueError(f"Failed to open {path}")
+            raise ValueError(f"Failed to open {source}")
 
         original_fps = cap.get(cv2.CAP_PROP_FPS)
 
@@ -62,19 +62,19 @@ class OpenCVProducer:
 
         cap.release()
 
-    def get_info(self, path):
+    def get_info(self, source):
         """
         Extracts video properties.
 
         Args:
-            path (str): The path to the video file/stream_url/v4l2 device.
+            source (str): The path to the video file/stream_url/v4l2 device.
 
         Returns:
             dict: Video properties including width, height, fps, and frame count.
         """
-        cap = cv2.VideoCapture(path)
+        cap = cv2.VideoCapture(source)
         if not cap.isOpened():
-            raise ValueError(f"Failed to open {path}")
+            raise ValueError(f"Failed to open {source}")
 
         width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
         height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)

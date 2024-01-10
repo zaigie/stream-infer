@@ -10,13 +10,13 @@ class PyAVProducer:
         self.height = height
         self.format = "bgr24" if format is None else format
 
-    def read(self, path, fps=None, position=0):
+    def read(self, source, fps=None, position=0):
         """
         Reads frames from a video file/stream_url/v4l2 device.
         Optionally skips frames to meet the specified fps.
 
         Args:
-            path (str): The path to the video file/stream_url/v4l2 device.
+            source (str): The path to the video file/stream_url/v4l2 device.
             fps (int, optional): Target frames per second. If None, no frame skipping is done.
             position (int, optional): The position in seconds from where to start reading the video.
 
@@ -24,7 +24,7 @@ class PyAVProducer:
             numpy.ndarray: frame
         """
         try:
-            container = av.open(path)
+            container = av.open(source)
             video_stream = next(s for s in container.streams if s.type == "video")
             original_fps = video_stream.base_rate
 
@@ -58,23 +58,23 @@ class PyAVProducer:
                 frame_index += 1
 
         except av.AVError as e:
-            logger.error(f"Failed to open {path}: {e}")
-            raise ValueError(f"Failed to open {path}: {e}")
+            logger.error(f"Failed to open {source}: {e}")
+            raise ValueError(f"Failed to open {source}: {e}")
 
         container.close()
 
-    def get_info(self, path):
+    def get_info(self, source):
         """
         Extracts video properties.
 
         Args:
-            path (str): The path to the video file/stream_url/v4l2 device.
+            source (str): The path to the video file/stream_url/v4l2 device.
 
         Returns:
             dict: Video properties including width, height, fps, and frame count.
         """
         try:
-            container = av.open(path)
+            container = av.open(source)
             video_stream = next(s for s in container.streams if s.type == "video")
 
             width = video_stream.width
@@ -97,4 +97,4 @@ class PyAVProducer:
             }
 
         except av.AVError as e:
-            raise ValueError(f"Failed to open {path}: {e}")
+            raise ValueError(f"Failed to open {source}: {e}")
