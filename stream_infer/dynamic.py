@@ -20,17 +20,18 @@ class ProducerData(BaseModel):
 class DynamicImport(BaseModel):
     module: str
     name: str
-    args: Union[dict, None] = None
+    args: Union[tuple, None] = ()
+    kwargs: Union[dict, None] = {}
 
 
-class AlgoArgs(BaseModel):
+class AlgoKwArgs(BaseModel):
     frame_count: int
     frame_step: int
     interval: int
 
 
 class Algos(DynamicImport):
-    args: AlgoArgs
+    kwargs: AlgoKwArgs
 
 
 class DynamicConfig(BaseModel):
@@ -56,7 +57,7 @@ class DynamicApp:
         dispatcher_module = self.dynamic_import(config.dispatcher.module)
         dispatcher_cls = getattr(dispatcher_module, config.dispatcher.name)
         self.dispatcher = dispatcher_cls.create(
-            mode=config.mode, **config.dispatcher.args
+            mode=config.mode, *config.dispatcher.args, **config.dispatcher.kwargs
         )
         self.inference = Inference(self.dispatcher)
         if config.process is not None:
@@ -82,7 +83,7 @@ class DynamicApp:
         for algo in self.config.algos:
             module = self.dynamic_import(algo.module)
             algo_class = getattr(module, algo.name)
-            self.inference.load_algo(algo_class(), **algo.args.dict())
+            self.inference.load_algo(algo_class(), **algo.kwargs.dict())
         self.inference.start(
             Player(
                 self.dispatcher,

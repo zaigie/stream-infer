@@ -7,17 +7,13 @@ config = {
     "dispatcher": {
         "module": "stream_infer.dispatcher",
         "name": "DevelopDispatcher",
-        "args": {"buffer": 1},
+        "kwargs": {"buffer": 1},
     },
     "algos": [
         {
             "module": "./algos/yolo.py",
             "name": "YoloDetectionAlgo2",
-            "args": {
-                "frame_count": 1,
-                "frame_step": 0,
-                "interval": 1,
-            },
+            "kwargs": {"frame_count": 1, "frame_step": 0, "interval": 1},
         }
     ],
     "producer": {"type": "opencv", "width": 640, "height": 360},
