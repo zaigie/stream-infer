@@ -1,5 +1,5 @@
 import threading as th
-from typing import Union, List
+from typing import Union, List, Literal
 
 from .dispatcher import Dispatcher
 from .algo import BaseAlgo
@@ -21,7 +21,7 @@ class Inference:
 
     def load_algo(
         self,
-        algo_instance,
+        algo_instance: BaseAlgo,
         frame_count: int,
         frame_step: int,
         interval: Union[int, float],
@@ -97,7 +97,7 @@ class Inference:
         player: Player,
         fps: int = 30,
         position: int = 0,
-        mode: Mode = Mode.REALTIME,
+        mode: Literal["realtime", "offline"] = "realtime",
         recording_path: str = None,
     ):
         if mode in [Mode.OFFLINE, Mode.OFFLINE.value]:

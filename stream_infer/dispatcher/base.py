@@ -1,6 +1,6 @@
 from multiprocessing.managers import BaseManager
 from collections import deque
-from typing import List, Any
+from typing import List, Any, Literal
 
 from ..util import position2time
 from ..log import logger
@@ -53,7 +53,12 @@ class Dispatcher:
         self.current_frame_index = 0
 
     @classmethod
-    def create(cls, mode: Mode = Mode.REALTIME, buffer: int = 30, **kwargs):
+    def create(
+        cls,
+        mode: Literal["realtime", "offline"] = "realtime",
+        buffer: int = 30,
+        **kwargs,
+    ):
         if mode in [Mode.OFFLINE, Mode.OFFLINE.value]:
             return cls(buffer, **kwargs)
         else:
