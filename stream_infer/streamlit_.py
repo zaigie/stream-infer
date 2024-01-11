@@ -1,4 +1,6 @@
 import streamlit as st
+from typing import Literal
+
 from .inference import Inference
 from .player import Player
 from .producer import OpenCVProducer, PyAVProducer
@@ -203,7 +205,7 @@ class StreamlitApp:
         self.output_func = wrapper
 
     def start(
-        self, producer_type: ProducerType = ProducerType.OPENCV, clear: bool = False
+        self, producer_type: Literal["opencv", "pyav"] = "opencv", clear: bool = False
     ):
         if self.get_state("mode") != "infering":
             st.stop()
