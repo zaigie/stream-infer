@@ -112,11 +112,15 @@ class Inference:
                     recorder.add_frame(frame)
             if recorder:
                 recorder.close()
-        else:
+        elif mode in [Mode.REALTIME, Mode.REALTIME.value]:
             player.play_async(fps)
             self.run_async()
             while player.is_active():
                 self.process_func()
             self.stop()
             player.stop()
+        else:
+            err = f"Unsupported mode: {mode}, only support `realtime` or `offline`"
+            logger.error(err)
+            raise ValueError(err)
         self.dispatcher.clear()

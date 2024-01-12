@@ -61,8 +61,12 @@ class Dispatcher:
     ):
         if mode in [Mode.OFFLINE, Mode.OFFLINE.value]:
             return cls(buffer, **kwargs)
-        else:
+        elif mode in [Mode.REALTIME, Mode.REALTIME.value]:
             return DispatcherManager(cls).create(buffer, **kwargs)
+        else:
+            err = f"Unsupported mode: {mode}, only support `realtime` or `offline`"
+            logger.error(err)
+            raise ValueError(err)
 
 
 class DispatcherManager:
