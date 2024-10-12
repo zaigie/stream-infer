@@ -1,12 +1,12 @@
-# <img src="https://github.com/zaigie/stream-infer/blob/main/docs/img/logo_.png?raw=true" alt="Stream Infer" height="60px">
+# <img src="./docs/img/logo_.png?raw=true" alt="Stream Infer" height="60px">
 
 [![PyPI](https://img.shields.io/pypi/v/stream-infer?color=dark-green)](https://pypi.org/project/stream-infer/)
 [![PyPI downloads](https://img.shields.io/pypi/dm/stream-infer?color=dark-green)](https://pypi.org/project/stream-infer/)
-[![GitHub license](https://img.shields.io/github/license/zaigie/stream-infer?color=orange)](https://github.com/zaigie/stream-infer/blob/main/LICENSE)
+[![GitHub license](https://img.shields.io/github/license/zaigie/stream-infer?color=orange)](./LICENSE)
 [![GitHub commit activity](https://img.shields.io/github/commit-activity/m/zaigie/stream-infer)](https://github.com/zaigie/stream-infer/graphs/commit-activity)
 
 <p align="left">
-   <strong>English</strong> | <a href="https://github.com/zaigie/stream-infer/blob/main/README.zh.md">简体中文</a>
+   <strong>English</strong> | <a href="./README.zh.md">简体中文</a>
 </p>
 
 Stream Infer is a Python library designed for streaming inference in video processing applications, enabling the integration of various image algorithms for video structuring. It supports both real-time and offline inference modes.
@@ -21,7 +21,7 @@ Sometimes it's even necessary to connect to a real-time camera or a live web str
 
 If you have the above requirements, then a simple Stream Infer can meet all your needs from development to debugging and to production operation.
 
-![Flow](https://github.com/zaigie/stream-infer/blob/main/docs/img/flow.svg?raw=true)
+![Flow](./docs/img/flow.svg?raw=true)
 
 ## Features
 
@@ -69,8 +69,8 @@ Besides debugging during the development phase, offline inference can also be us
 
 View and run the demo:
 
-- General operation: [examples/offline_general.py](https://github.com/zaigie/stream_infer/blob/main/examples/offline_general.py)
-- Set up handlers to process frames and inference results, and display and record them using cv2: [examples/offline_custom_process_record.py](https://github.com/zaigie/stream_infer/blob/main/examples/offline_custom_process_record.py)
+- General operation: [examples/offline_general.py](./examples/offline_general.py)
+- Set up handlers to process frames and inference results, and display and record them using cv2: [examples/offline_custom_process_record.py](./examples/offline_custom_process_record.py)
 
 > [!WARNING]
 > This example `offline_custom_process_record.py` use OpenCV GUI-related features, such as presentation Windows, which can be manually installed either `opencv-python` or `opencv-contrib-python`, or simply
@@ -95,8 +95,8 @@ Real-time inference is not suitable for the development phase but is often used 
 
 View and run the demo:
 
-- General Operation: [examples/realtime_general.py](https://github.com/zaigie/stream_infer/blob/main/examples/realtime_general.py)
-- Set up the handler and manually print the inference result: [examples/realtime_custom_process.py](https://github.com/zaigie/stream_infer/blob/main/examples/realtime_custom_process.py)
+- General Operation: [examples/realtime_general.py](./examples/realtime_general.py)
+- Set up the handler and manually print the inference result: [examples/realtime_custom_process.py](./examples/realtime_custom_process.py)
 
 ### Dynamic Execution
 
@@ -104,7 +104,7 @@ Leveraging Python's reflection and dynamic import capabilities, it supports conf
 
 This mode is mainly useful for the development of inference servers, where structured data can be passed in via REST/gRPC or other methods to initiate an inference task.
 
-View and run the demo: [examples/dynamic_app.py](https://github.com/zaigie/stream_infer/blob/main/examples/dynamic_app.py)
+View and run the demo: [examples/dynamic_app.py](./examples/dynamic_app.py)
 
 ### Visualization Development & Debugging
 
@@ -122,7 +122,7 @@ To run this feature, install the server version:
 pip install -U 'stream-infer[server]'
 ```
 
-View and run the demo: [examples/streamlit_app.py](https://github.com/zaigie/stream_infer/blob/main/examples/streamlit_app.py)
+View and run the demo: [examples/streamlit_app.py](./examples/streamlit_app.py)
 
 ```bash
 streamlit run streamlit_app.py
@@ -130,7 +130,7 @@ streamlit run streamlit_app.py
 
 ## Modules
 
-Please read the following content in conjunction with [examples](https://github.com/zaigie/stream_infer/blob/main/examples).
+Please read the following content in conjunction with [examples](./examples).
 
 ### BaseAlgo
 
@@ -180,7 +180,7 @@ This way, you have completed the encapsulation and can call it normally in the f
 
 Dispatcher is a central service for playing and reasoning, used to cache inference frames, distribute inference frames, and collect inference time and result data.
 
-Dispatcher provides functions for adding/getting frames and times. Stream Infer has a built-in [DevelopDispatcher](https://github.com/zaigie/stream_infer/blob/main/stream_infer/dispatcher/develop.py) for manually storing and retrieving inference results.
+Dispatcher provides functions for adding/getting frames and times. Stream Infer has a built-in [DevelopDispatcher](./stream_infer/dispatcher/develop.py) for manually storing and retrieving inference results.
 
 You don't need to worry about the others, but to allow you to get the results and conveniently print or store them elsewhere, you should pay attention to the `collect()` function. Its source code implementation is as follows:
 
@@ -327,7 +327,7 @@ It should be specifically noted that during the inference process, you may need 
 
 Currently, the recorded videos only support the mp4 format. When you use `OpenCVProducer`, the files are encoded in mp4v, while under `PyAVProducer`, they are encoded in h264 mp4 format. We recommend using `PyAVProducer` as it offers a better compression rate.
 
-For specific usage, you can refer to the example codes in [examples/offline_custom_process_record.py](https://github.com/zaigie/stream_infer/blob/main/examples/offline_custom_process_record.py) and [examples/realtime_custom_process.py](https://github.com/zaigie/stream_infer/blob/main/examples/realtime_custom_process.py).
+For specific usage, you can refer to the example codes in [examples/offline_custom_process_record.py](./examples/offline_custom_process_record.py) and [examples/realtime_custom_process.py](./examples/realtime_custom_process.py).
 
 ## License
 
