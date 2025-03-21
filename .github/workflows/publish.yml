@@ -1,0 +1,74 @@
+name: Publish to PyPI
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0  # Fetch all history for proper versioning
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        cache: 'pip'
+    
+    - name: Extract version from tag
+      id: get_version
+      run: |
+        TAG_VERSION=${GITHUB_REF#refs/tags/}
+        echo "VERSION=$TAG_VERSION" >> $GITHUB_ENV
+        echo "📦 Publishing version: $TAG_VERSION"
+    
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+      with:
+        version: 1.5.1
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+    
+    - name: Load cached dependencies
+      id: cached-poetry-dependencies
+      uses: actions/cache@v3
+      with:
+        path: .venv
+        key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+    
+    - name: Install dependencies
+      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+      run: poetry install --no-interaction --no-root
+    
+    - name: Update version in pyproject.toml
+      run: |
+        # Replace version in pyproject.toml with the tag version
+        sed -i "s/version = \".*\"/version = \"$VERSION\"/" pyproject.toml
+        echo "✅ Updated version in pyproject.toml to $VERSION"
+        grep "version =" pyproject.toml
+    
+    - name: Build package
+      run: |
+        poetry build
+        echo "✅ Package built successfully"
+        ls -la dist/
+    
+    - name: Check package
+      run: |
+        pip install twine
+        twine check dist/*
+        echo "✅ Package verification passed"
+    
+    - name: Publish package to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        password: ${{ secrets.PYPI_API_TOKEN }}
+        verbose: true
