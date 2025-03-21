@@ -57,7 +57,7 @@ class PyAVProducer:
 
                 frame_index += 1
 
-        except av.AVError as e:
+        except Exception as e:
             logger.error(f"Failed to open {source}: {e}")
             raise ValueError(f"Failed to open {source}: {e}")
 
