@@ -17,7 +17,11 @@ class Player:
         producer: Union[OpenCVProducer, PyAVProducer],
         source: Union[str, int],
         show_progress: bool = True,
+        logging_level: str = "INFO",
     ):
+        # 设置日志级别
+        from .log import set_log_level
+        set_log_level(logging_level)
         self.dispatcher = dispatcher
         self.producer = producer
         self.source = source
