@@ -212,9 +212,8 @@ class Inference:
                     f"Algorithm {algo_instance.name} took {elapsed:.4f}s to run"
                 )
 
-                # 缓存结果，但不清除整个缓存，让LRU机制自动管理
-                # 注意：这里不需要手动清除缓存，LRU会自动管理
-                self._get_cached_result.cache_info()  # 仅用于触发缓存统计，不影响功能
+                # 缓存结果，让LRU机制自动管理
+                self._get_cached_result(algo_instance.name, frame_hash)
 
             # 收集结果
             self.dispatcher.collect(
@@ -359,7 +358,9 @@ class Inference:
             if recorder:
                 recorder.close()
 
-    def _start_realtime_mode(self, player: Player, fps: int, logging_level: str = "INFO") -> None:
+    def _start_realtime_mode(
+        self, player: Player, fps: int, logging_level: str = "INFO"
+    ) -> None:
         """启动实时模式
 
         Args:
@@ -369,7 +370,7 @@ class Inference:
         """
         try:
             # 启动异步播放和推理
-            player_thread = player.play_async(fps)
+            player_thread = player.play_async(fps, logging_level=logging_level)
             inference_thread = self.run_async()
 
             # 创建一个弱引用字典来跟踪已处理的帧

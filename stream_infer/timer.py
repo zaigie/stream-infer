@@ -25,7 +25,7 @@ class Timer:
         current_time = time.time()
         elapsed = round(current_time - self.last_call, 3) if self.last_call else 0
         if self.last_call is None or elapsed >= self.interval:
-            if elapsed > self.interval:
+            if elapsed > self.interval and elapsed - self.interval > 0.1:
                 latency = round(elapsed - self.interval, 3)
                 suggest = round(self.interval + latency, 1)
                 logger.warning(

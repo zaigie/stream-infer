@@ -21,6 +21,7 @@ class Player:
     ):
         # 设置日志级别
         from .log import set_log_level
+
         set_log_level(logging_level)
         self.dispatcher = dispatcher
         self.producer = producer
@@ -70,9 +71,13 @@ class Player:
         if self.show_progress:
             pbar.close()
 
-    def play_async(self, fps=None):
+    def play_async(self, fps=None, logging_level="INFO"):
         """
         Starts the appropriate streaming process based on the frame count.
+
+        Args:
+            fps: 每秒帧数，如果为None则使用视频原始帧率
+            logging_level: 日志级别，可选值为'DEBUG', 'INFO', 'WARNING', 'ERROR'，默认为'INFO'
         """
         if not isinstance(self.dispatcher, BaseProxy):
             logger.error(
@@ -90,12 +95,18 @@ class Player:
                 )
         self.play_fps = fps
 
+        # 在子进程中设置日志级别
+        from .log import set_log_level
+
+        set_log_level(logging_level)
+
         if self.frame_count <= 0:
             target = self.normal_stream
         else:
             target = self.video_stream
 
-        self.process = mp.Process(target=target)
+        # 创建进程时传递日志级别参数
+        self.process = mp.Process(target=target, args=(logging_level,))
         self.process.start()
         return self.process
 
@@ -115,9 +126,12 @@ class Player:
     def get_play_time(self) -> str:
         return position2time(self.dispatcher.get_current_position())
 
-    def video_stream(self):
+    def video_stream(self, logging_level="INFO"):
         """
         Handles streaming for video files. Frames are processed at a rate determined by the video's FPS.
+
+        Args:
+            logging_level: 日志级别，可选值为'DEBUG', 'INFO', 'WARNING', 'ERROR'，默认为'INFO'
         """
         base_interval = 1 / self.play_fps
         start_time = time.time()
@@ -147,9 +161,12 @@ class Player:
             pbar.close()
         self.is_end.value = True
 
-    def normal_stream(self):
+    def normal_stream(self, logging_level="INFO"):
         """
         Handles streaming for non-video files. Frames are processed at regular intervals.
+
+        Args:
+            logging_level: 日志级别，可选值为'DEBUG', 'INFO', 'WARNING', 'ERROR'，默认为'INFO'
         """
         for frame in self.producer.read(self.source, self.play_fps):
             if self.dispatcher.get_current_frame_index() % self.play_fps == 0:
