@@ -1,7 +1,9 @@
 import cv2
+import streamlit as st
+from algos import PoseDetectionAlgo, YoloDetectionAlgo
+
 from stream_infer import Inference, StreamlitApp
 from stream_infer.dispatcher import DevelopDispatcher
-from algos import YoloDetectionAlgo, PoseDetectionAlgo
 
 dispatcher = DevelopDispatcher.create(mode="offline", buffer=5)
 inference = Inference(dispatcher)
@@ -41,29 +43,65 @@ def annotate_frame(app: StreamlitApp, name, data, frame):
     return frame
 
 
+algo_containers = {}
+
+
 # Set output display func
 @app.output
 def output(app: StreamlitApp, name, position, data):
     if data is None:
         return
-    things = [data.names[box.cls[0].int().item()] for box in data.boxes]
 
-    def count_things(name):
-        count = 0
-        for thing in things:
-            if thing == name:
-                count += 1
-        return count
+    global algo_containers
+    if name not in algo_containers:
+        algo_containers[name] = app.output_widgets[name].empty()
+
+    algo_containers[name].empty()
+
+    container = algo_containers[name].container()
 
     if name == "things":
-        types = set(things)
-        cols = app.output_widgets[name].columns(len(types))
-        for i, t in enumerate(types):
-            cols[i].metric(t, count_things(t))
+        things = [data.names[box.cls[0].int().item()] for box in data.boxes]
+        if not things:
+            container.text("未检测到物体")
+            return
 
-    if name == "pose":
-        app.output_widgets[name] = app.output_widgets[name].container()
-        app.output_widgets[name].text(f"{position}: {things}")
+        thing_counts = {}
+        for thing in things:
+            if thing in thing_counts:
+                thing_counts[thing] += 1
+            else:
+                thing_counts[thing] = 1
+
+        container.subheader(f"检测到 {len(things)} 个物体")
+
+        import pandas as pd
+
+        df = pd.DataFrame(
+            {"物体类型": list(thing_counts.keys()), "数量": list(thing_counts.values())}
+        )
+        container.dataframe(
+            df,
+            column_config={
+                "物体类型": st.column_config.TextColumn("物体类型"),
+                "数量": st.column_config.NumberColumn("数量", format="%d"),
+            },
+            hide_index=True,
+            use_container_width=True,
+        )
+
+    elif name == "pose":
+        keypoints = data.keypoints
+        num_persons = len(keypoints.data) if hasattr(keypoints, "data") else 0
+
+        summary = f"时间: {position}秒 | 检测到 {num_persons} 人"
+        container.subheader(summary)
+
+        if num_persons > 0 and num_persons <= 3:
+            for i, person in enumerate(keypoints.data[:3]):
+                with container.expander(f"人物 #{i+1} 详情", expanded=False):
+                    valid_kps = sum(1 for kp in person if kp[2] > 0.5)
+                    st.text(f"有效关键点: {valid_kps}/{len(person)}")
 
 
 app.start(producer_type="pyav", clear=False)  # options: opencv, pyav
