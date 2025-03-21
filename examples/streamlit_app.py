@@ -44,6 +44,7 @@ def annotate_frame(app: StreamlitApp, name, data, frame):
 
 
 algo_containers = {}
+algo_states = {}
 
 
 # Set output display func
@@ -52,34 +53,41 @@ def output(app: StreamlitApp, name, position, data):
     if data is None:
         return
 
-    global algo_containers
+    global algo_containers, algo_states
     if name not in algo_containers:
         algo_containers[name] = app.output_widgets[name].empty()
+        algo_states[name] = {"last_had_data": False}
 
     algo_containers[name].empty()
 
     container = algo_containers[name].container()
 
     if name == "things":
-        things = [data.names[box.cls[0].int().item()] for box in data.boxes]
-        if not things:
-            container.text("未检测到物体")
-            return
-
-        thing_counts = {}
-        for thing in things:
-            if thing in thing_counts:
-                thing_counts[thing] += 1
-            else:
-                thing_counts[thing] = 1
-
-        container.subheader(f"检测到 {len(things)} 个物体")
-
         import pandas as pd
 
-        df = pd.DataFrame(
-            {"物体类型": list(thing_counts.keys()), "数量": list(thing_counts.values())}
-        )
+        things = [data.names[box.cls[0].int().item()] for box in data.boxes]
+
+        if not things:
+            container.subheader("未检测到物体")
+            df = pd.DataFrame({"物体类型": [], "数量": []})
+            algo_states[name]["last_had_data"] = False
+        else:
+            thing_counts = {}
+            for thing in things:
+                if thing in thing_counts:
+                    thing_counts[thing] += 1
+                else:
+                    thing_counts[thing] = 1
+
+            container.subheader(f"检测到 {len(things)} 个物体")
+            df = pd.DataFrame(
+                {
+                    "物体类型": list(thing_counts.keys()),
+                    "数量": list(thing_counts.values()),
+                }
+            )
+            algo_states[name]["last_had_data"] = True
+
         container.dataframe(
             df,
             column_config={
@@ -97,11 +105,17 @@ def output(app: StreamlitApp, name, position, data):
         summary = f"时间: {position}秒 | 检测到 {num_persons} 人"
         container.subheader(summary)
 
+        if num_persons == 0:
+            algo_states[name]["last_had_data"] = False
+            return
+
         if num_persons > 0 and num_persons <= 3:
             for i, person in enumerate(keypoints.data[:3]):
                 with container.expander(f"人物 #{i+1} 详情", expanded=False):
                     valid_kps = sum(1 for kp in person if kp[2] > 0.5)
                     st.text(f"有效关键点: {valid_kps}/{len(person)}")
+
+        algo_states[name]["last_had_data"] = num_persons > 0
 
 
 app.start(producer_type="pyav", clear=False)  # options: opencv, pyav
