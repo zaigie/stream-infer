@@ -12,16 +12,16 @@ class PyAVProducer:
 
     def read(self, source, fps=None, position=0):
         """
-        Reads frames from a video file/stream_url/v4l2 device.
-        Optionally skips frames to meet the specified fps.
+        从视频文件/流URL/v4l2设备读取帧。
+        可选择跳过帧以满足指定的fps。
 
         Args:
-            source (str): The path to the video file/stream_url/v4l2 device.
-            fps (int, optional): Target frames per second. If None, no frame skipping is done.
-            position (int, optional): The position in seconds from where to start reading the video.
+            source (str): 视频文件/流URL/v4l2设备的路径。
+            fps (int, optional): 目标每秒帧数。如果为None，则不跳过任何帧。
+            position (int, optional): 开始读取视频的秒数位置。
 
         Yields:
-            numpy.ndarray: frame
+            numpy.ndarray: 帧
         """
         try:
             container = av.open(source)
@@ -65,13 +65,13 @@ class PyAVProducer:
 
     def get_info(self, source):
         """
-        Extracts video properties.
+        提取视频属性。
 
         Args:
-            source (str): The path to the video file/stream_url/v4l2 device.
+            source (str): 视频文件/流URL/v4l2设备的路径。
 
         Returns:
-            dict: Video properties including width, height, fps, and frame count.
+            dict: 包含宽度、高度、fps和帧数的视频属性。
         """
         try:
             container = av.open(source)

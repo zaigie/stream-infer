@@ -73,7 +73,7 @@ class Player:
 
     def play_async(self, fps=None, logging_level="INFO"):
         """
-        Starts the appropriate streaming process based on the frame count.
+        根据帧数启动适当的流媒体进程。
 
         Args:
             fps: 每秒帧数，如果为None则使用视频原始帧率
@@ -117,7 +117,7 @@ class Player:
 
     def is_active(self) -> bool:
         """
-        Checks if the streaming process is still running.
+        检查流媒体进程是否仍在运行。
         """
         return (
             self.process.is_alive() and not self.is_end.value if self.process else False
@@ -128,7 +128,7 @@ class Player:
 
     def video_stream(self, logging_level="INFO"):
         """
-        Handles streaming for video files. Frames are processed at a rate determined by the video's FPS.
+        处理视频文件的流媒体。帧按照视频的FPS决定的速率进行处理。
 
         Args:
             logging_level: 日志级别，可选值为'DEBUG', 'INFO', 'WARNING', 'ERROR'，默认为'INFO'
@@ -163,7 +163,7 @@ class Player:
 
     def normal_stream(self, logging_level="INFO"):
         """
-        Handles streaming for non-video files. Frames are processed at regular intervals.
+        处理非视频文件的流媒体。帧按照规则间隔进行处理。
 
         Args:
             logging_level: 日志级别，可选值为'DEBUG', 'INFO', 'WARNING', 'ERROR'，默认为'INFO'

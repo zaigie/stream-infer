@@ -6,12 +6,12 @@ class BaseAlgo:
 
     def init(self):
         """
-        Initialize the algo model or other resources.
+        初始化算法模型或其他资源。
         """
         raise NotImplementedError
 
     def run(self):
         """
-        Run inference and return the inference result.
+        运行推理并返回推理结果。
         """
         raise NotImplementedError
