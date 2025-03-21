@@ -1,9 +1,9 @@
 import cv2
+from algos import YoloDetectionAlgo
+
 from stream_infer import Inference, Player
 from stream_infer.dispatcher import DevelopDispatcher
 from stream_infer.producer import OpenCVProducer
-
-from algos import YoloDetectionAlgo
 
 dispatcher = DevelopDispatcher.create(mode="offline", buffer=1)
 inference = Inference(dispatcher)

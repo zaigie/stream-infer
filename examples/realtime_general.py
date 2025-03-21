@@ -1,8 +1,8 @@
+from algos import YoloDetectionAlgo2
+
 from stream_infer import Inference, Player
 from stream_infer.dispatcher import Dispatcher
 from stream_infer.producer import OpenCVProducer
-
-from algos import YoloDetectionAlgo2
 
 source = "./classroom.mp4"
 # source = "rtmp://"

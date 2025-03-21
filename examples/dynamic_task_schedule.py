@@ -1,5 +1,6 @@
-from stream_infer.dynamic import DynamicApp, DynamicConfig
 import tasktiger
+
+from stream_infer.dynamic import DynamicApp, DynamicConfig
 
 tiger = tasktiger.TaskTiger()
 

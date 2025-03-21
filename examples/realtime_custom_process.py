@@ -1,9 +1,9 @@
+from algos import YoloDetectionAlgo2
+
 from stream_infer import Inference, Player
 from stream_infer.dispatcher import DevelopDispatcher
-from stream_infer.producer import OpenCVProducer
 from stream_infer.log import logger
-
-from algos import YoloDetectionAlgo2
+from stream_infer.producer import OpenCVProducer
 
 
 def realtime_process(inference: Inference):
