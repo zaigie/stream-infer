@@ -239,7 +239,7 @@ dispatcher = RedisDispatcher.create(buffer=15, host="localhost", port=6379, db=1
 > [!CAUTION]
 > 对于 `buffer`参数，默认值为 30，会将最新的 30 帧 ndarray 数据存在缓冲区中，**该参数越大，程序占用的内存就越大！**
 >
-> 建议根据实际推理间隔情况设置为 `buffer = max(frame_count * (frame_step if frame_step else 1))`
+> 建议根据您的算法需求设置为 `buffer = max(frame_count * (frame_step if frame_step else 1))`。例如，如果您有一个算法需要 `frame_count=5` 和 `frame_step=3`，则应将 `buffer` 设置为至少15，以确保有足够的帧可用。
 
 ### Inference
 
@@ -271,9 +271,21 @@ inference.load_algo(AnyOtherAlgo("other"), 5, 6, 60)
 
 而加载算法的几个参数则是框架的核心功能，让您能自由实现取帧逻辑：
 
-- frame_count：算法需要获取的帧数量，也就是最终 run() 函数中收到的 frames 数量。
-- frame_step：每隔 `frame_step` 取 1 帧，共取 `frame_count` 帧，可为 0。（当 `frame_count` 为 1 时，这个参数决定的只是启动延迟）
-- interval：单位秒，表示算法调用频率，如 `AnyOtherAlgo` 就只会在一分钟才调用一次，用来在不需要调用它的时候节省资源
+- **frame_count**：算法每次运行时处理的帧数量。例如：
+  - `frame_count=1`：仅处理最新的一帧（适用于单帧图像处理算法，如人脸检测）
+  - `frame_count=5`：同时处理5帧（适用于需要短时间上下文的算法，如简单动作识别）
+  - `frame_count=30`：同时处理30帧（在30fps下约1秒视频），适用于需要更长时间上下文的算法
+
+- **frame_step**：帧之间的采样间隔。控制如何从缓冲区中选择帧：
+  - `frame_step=0`：获取最近的`frame_count`个连续帧
+  - `frame_step=1`：获取每一帧（与0相同但更明确）
+  - `frame_step=2`：每隔一帧获取一帧（每个选定帧之间跳过一帧）
+  - `frame_step=10`：每隔10帧获取一帧（适用于分析较长时间范围内的变化）
+
+- **interval**：算法执行之间的时间间隔（秒）。控制算法运行的频率：
+  - `interval=0.1`：每秒运行算法10次（适用于高频应用如跟踪）
+  - `interval=1.0`：每秒运行算法一次（适用于一般的实时分析）
+  - `interval=5.0`：每5秒运行算法一次（适用于变化缓慢的场景或计算密集型算法）
 
 ### Producer
 

@@ -241,7 +241,7 @@ You may have noticed that the instantiation of dispatcher differs between offlin
 > [!CAUTION]
 > For the `buffer` parameter, the default value is 30, which keeps the latest 30 frames of ndarray data in the buffer. **The larger this parameter, the more memory the program occupies!**
 >
-> It is recommended to set it to `buffer = max(frame_count * (frame_step if frame_step else 1))` based on the actual inference interval.
+> It is recommended to set it to `buffer = max(frame_count * (frame_step if frame_step else 1))` based on your algorithm requirements. For example, if you have an algorithm that needs `frame_count=5` and `frame_step=3`, you should set `buffer` to at least 15 to ensure enough frames are available.
 
 ### Inference
 
@@ -273,9 +273,23 @@ Here, we can give HeadDetectionAlgo a name to identify the running algorithm (ne
 
 The parameters for loading an algorithm are the framework's core functionality, allowing you to freely implement frame retrieval logic:
 
-- frame_count: The number of frames the algorithm needs to get, which is the number of frames the run() function will receive.
-- frame_step: Take 1 frame every `frame_step`, up to `frame_count` frames, receive 0. (when `frame_count` is equal to 1, this parameter determines only the startup delay)
-- interval: In seconds, indicating the frequency of algorithm calls, like `AnyOtherAlgo` will only be called once a minute to save resources when not needed.
+- **frame_count**: The number of frames the algorithm processes each time it runs. For example:
+
+  - `frame_count=1`: Process only the most recent frame (for single-image algorithms like face detection)
+  - `frame_count=5`: Process 5 frames simultaneously (for algorithms needing short temporal context like simple action recognition)
+  - `frame_count=30`: Process 30 frames (about 1 second of video at 30fps) for algorithms requiring longer temporal context
+
+- **frame_step**: The sampling interval between frames. Controls how frames are selected from the buffer:
+
+  - `frame_step=0`: Get the most recent `frame_count` consecutive frames
+  - `frame_step=1`: Get every frame (same as 0 but more explicit)
+  - `frame_step=2`: Get every other frame (skip one frame between each selected frame)
+  - `frame_step=10`: Get every 10th frame (useful for analyzing changes over longer time periods)
+
+- **interval**: The time interval (in seconds) between algorithm executions. Controls how frequently the algorithm runs:
+  - `interval=0.1`: Run algorithm 10 times per second (for high-frequency applications like tracking)
+  - `interval=1.0`: Run algorithm once per second (for general real-time analysis)
+  - `interval=5.0`: Run algorithm every 5 seconds (for slow-changing scenes or computationally intensive algorithms)
 
 ### Producer
 
