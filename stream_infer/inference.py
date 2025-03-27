@@ -30,6 +30,7 @@ class Inference:
         frame_count: int,
         frame_step: int,
         interval: Union[int, float],
+        **kwargs,
     ) -> None:
         """加载算法实例
 
@@ -38,6 +39,7 @@ class Inference:
             frame_count: 处理的帧数
             frame_step: 帧步长
             interval: 执行间隔（秒）
+            kwargs: 其他参数
 
         Raises:
             ValueError: 如果algo_instance不是BaseAlgo的实例
@@ -52,7 +54,7 @@ class Inference:
                 (algo_instance, frame_count, frame_step, interval)
             )
             self.timers[algo_instance.name] = Timer(interval, key=algo_instance.name)
-            algo_instance.init()
+            algo_instance.init(**kwargs)
             logger.info(f"Successfully loaded algorithm: {algo_instance.name}")
         except Exception as e:
             logger.error(f"Failed to load algorithm {algo_instance.name}: {str(e)}")
