@@ -59,7 +59,7 @@ class Dispatcher:
 
         Args:
             count: 要获取的帧数
-            step: 帧步长，必须大于等于0
+            step: 帧步长, 必须大于等于0
 
         Returns:
             List[Any]: 帧列表
@@ -90,7 +90,7 @@ class Dispatcher:
                 for i in indices[:count]:
                     if i >= 0:
                         result.append(self.queue[i])
-                return result
+                return result[::-1]
 
     def collect(self, position: int, algo_name: str, result: Any) -> None:
         """
