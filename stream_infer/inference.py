@@ -189,6 +189,13 @@ class Inference:
             int: 状态码，-1表示失败，0表示成功
         """
         algo_instance, frame_count, frame_step, _ = inference_info
+        if self.dispatcher.buffer_size < frame_count * (
+            frame_step if frame_step > 0 else 1
+        ):
+            logger.error(
+                f"Dispatcher `buffer` size is too small for {algo_instance.name}, buffer_size={self.dispatcher.buffer_size} needed more than {frame_count * (frame_step if frame_step > 0 else 1)}"
+            )
+            return -1
         try:
             # 获取帧
             frames = self.dispatcher.get_frames(frame_count, frame_step)

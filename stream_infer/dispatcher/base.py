@@ -36,6 +36,7 @@ class Dispatcher:
 
         set_log_level(logging_level)
 
+        self.buffer_size: int = buffer
         self.queue: Deque[Any] = deque(maxlen=buffer)
         self.current_position: int = 0
         self.current_frame_index: int = 0
