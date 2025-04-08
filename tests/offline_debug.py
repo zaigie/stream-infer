@@ -135,7 +135,7 @@ class DebugProducer(OpenCVProducer):
             yield colored_frame
 
 
-dispatcher = DebugDispatcher.create(mode="offline", buffer=5)
+dispatcher = DebugDispatcher.create(mode="offline", buffer=10)
 inference = Inference(dispatcher)
 
 
