@@ -20,8 +20,9 @@ class DebugAlgo(BaseAlgo):
     def run(self, frames):
         self.counter += 1
         result = {"counter": self.counter, "frames_count": len(frames) if frames else 0}
+        frame_indices = [frame[0] for frame in frames]
         print(
-            f"[DebugAlgo] Run: counter={self.counter}, frames_count={len(frames) if frames else 0}"
+            f"[DebugAlgo] Run: counter={self.counter}, frames_count={len(frames) if frames else 0}, frame_indices={frame_indices}"
         )
         return result
 
@@ -31,16 +32,6 @@ class DebugDispatcher(DevelopDispatcher):
         current_idx = self.current_frame_index
         frame = (current_idx, frame)
         super().add_frame(frame)
-
-    def get_frames(self, count: int, step: int) -> List[Any]:
-        frames = super().get_frames(count, step)
-        if frames and len(frames) > 0:
-            frame_indices = [frame[0] for frame in frames]
-            print(
-                f"[Debug] get_frames: count={count}, step={step}, frame_index={self.current_frame_index}, "
-                f"frame_indices={frame_indices}"
-            )
-        return frames
 
 
 dispatcher = DebugDispatcher.create(mode="offline", buffer=30)
