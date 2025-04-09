@@ -6,7 +6,7 @@ from stream_infer import Inference, StreamlitApp
 from stream_infer.dispatcher import DevelopDispatcher
 
 dispatcher = DevelopDispatcher.create(mode="offline", buffer=5)
-inference = Inference(dispatcher)
+inference = Inference(dispatcher)  # Player will be created automatically
 inference.load_algo(YoloDetectionAlgo("things"), 1, 0, 1)
 inference.load_algo(PoseDetectionAlgo("pose"), 1, 0, 0.1)
 app = StreamlitApp(inference)

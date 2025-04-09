@@ -233,7 +233,7 @@ Then instantiate:
 # Offline inference
 dispatcher = RequestDispatcher.create(mode="offline", buffer=30)
 # Real-time inference
-dispatcher = RedisDispatcher.create(buffer=15, host="localhost", port=6379, db=1)
+dispatcher = RedisDispatcher.create(mode="realtime", buffer=15, host="localhost", port=6379, db=1)
 ```
 
 You may have noticed that the instantiation of dispatcher differs between offline and real-time inference. This is because **in real-time inference, playback and inference are not in the same process**, and both need to share the same dispatcher, only the mode parameter has been changed, but the internal implementation uses the DispatcherManager agent.
@@ -243,18 +243,32 @@ You may have noticed that the instantiation of dispatcher differs between offlin
 >
 > It is recommended to set it to `buffer = max(frame_count * (frame_step if frame_step else 1))` based on your algorithm requirements. For example, if you have an algorithm that needs `frame_count=5` and `frame_step=3`, you should set `buffer` to at least 15 to ensure enough frames are available.
 
+### Player
+
+Player inputs dispatcher, producer, and the video/stream address for playback and inference.
+
+```python
+from stream_infer import Player
+
+...
+
+player = Player(dispatcher, producer, source, show_progress)
+```
+
+The `show_progress` parameter defaults to True, in which case the tqdm is used to display the progress bar. When set to False, progress is printed through the logger.
+
 ### Inference
 
 Inference is the core of the framework, implementing functions such as loading algorithms and running inference.
 
-An Inference object requires a Dispatcher object for frame retrieval and sending inference results.
+An Inference object requires a Dispatcher object and Player object for playback, frame retrieval and sending inference results.
 
 ```python
 from stream_infer import Inference
 
 ...
 
-inference = Inference(dispatcher)
+inference = Inference(dispatcher, player)
 ```
 
 When you need to load an algorithm, for example from the [BaseAlgo](#basealgo) section:
@@ -264,7 +278,7 @@ from anywhere_algo import HeadDetectionAlgo, AnyOtherAlgo
 
 ...
 
-inference = Inference(dispatcher)
+inference = Inference(dispatcher, player)
 inference.load_algo(HeadDetectionAlgo("head"), frame_count=1, frame_step=fps, interval=1)
 inference.load_algo(AnyOtherAlgo("other"), 5, 6, 60)
 ```
@@ -306,20 +320,6 @@ producer = OpenCVProducer(1920, 1080)
 
 > [!NOTE]
 > In most cases `OpenCVProducer` is sufficient and performs well. However, you may still need to use `PyAVProducer` (based on ffmpeg) to load some videos or streams that OpenCV cannot decode
-
-### Player
-
-Player inputs dispatcher, producer, and the video/stream address for playback and inference.
-
-```python
-from stream_infer import Player
-
-...
-
-player = Player(dispatcher, producer, source, show_progress)
-```
-
-The `show_progress` parameter defaults to True, in which case the tqdm is used to display the progress bar. When set to False, progress is printed through the logger.
 
 ### Run
 

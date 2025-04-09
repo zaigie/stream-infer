@@ -231,7 +231,7 @@ class RequestDispatcher(Dispatcher):
 # 离线推理
 dispatcher = RequestDispatcher.create(mode="offline", buffer=30)
 # 实时推理
-dispatcher = RedisDispatcher.create(buffer=15, host="localhost", port=6379, db=1)
+dispatcher = RedisDispatcher.create(mode="realtime", buffer=15, host="localhost", port=6379, db=1)
 ```
 
 您可能注意到，在离线推理和实时推理下实例化 dispatcher 的方式不同，这是因为 **实时推理下播放与推理不在一个进程中** ，而两者都需要共享同一个 dispatcher，虽然只是改变了 mode 参数，但其内部实现使用了 DispatcherManager 代理。
@@ -239,20 +239,34 @@ dispatcher = RedisDispatcher.create(buffer=15, host="localhost", port=6379, db=1
 > [!CAUTION]
 > 对于 `buffer`参数，默认值为 30，会将最新的 30 帧 ndarray 数据存在缓冲区中，**该参数越大，程序占用的内存就越大！**
 >
-> 建议根据您的算法需求设置为 `buffer = max(frame_count * (frame_step if frame_step else 1))`。例如，如果您有一个算法需要 `frame_count=5` 和 `frame_step=3`，则应将 `buffer` 设置为至少15，以确保有足够的帧可用。
+> 建议根据您的算法需求设置为 `buffer = max(frame_count * (frame_step if frame_step else 1))`。例如，如果您有一个算法需要 `frame_count=5` 和 `frame_step=3`，则应将 `buffer` 设置为至少 15，以确保有足够的帧可用。
+
+### Player
+
+Player 输入 dispatcher, producer 和视频/流媒体地址进行播放与推理
+
+```python
+from stream_infer import Player
+
+...
+
+player = Player(dispatcher, producer, source, show_progress)
+```
+
+`show_progress` 参数默认为 True，此时会使用 tqdm 显示进度条，而设置为 False 时会通过 logger 打印。
 
 ### Inference
 
 Inference 是本框架的核心，加载算法、运行推理等功能都由它实现。
 
-一个 Inference 对象须要输入 Dispatcher 对象用以取帧和发送推理结果等。
+一个 Inference 对象须要输入 Dispatcher 对象和 Player 对象用以播放、取帧和发送推理结果等。
 
 ```python
 from stream_infer import Inference
 
 ...
 
-inference = Inference(dispatcher)
+inference = Inference(dispatcher, player)
 ```
 
 当你需要加载算法时，这里以 [BaseAlgo](#basealgo) 中的例子举例
@@ -262,7 +276,7 @@ from anywhere_algo import HeadDetectionAlgo, AnyOtherAlgo
 
 ...
 
-inference = Inference(dispatcher)
+inference = Inference(dispatcher, player)
 inference.load_algo(HeadDetectionAlgo("head"), frame_count=1, frame_step=fps, interval=1)
 inference.load_algo(AnyOtherAlgo("other"), 5, 6, 60)
 ```
@@ -272,20 +286,22 @@ inference.load_algo(AnyOtherAlgo("other"), 5, 6, 60)
 而加载算法的几个参数则是框架的核心功能，让您能自由实现取帧逻辑：
 
 - **frame_count**：算法每次运行时处理的帧数量。例如：
+
   - `frame_count=1`：仅处理最新的一帧（适用于单帧图像处理算法，如人脸检测）
-  - `frame_count=5`：同时处理5帧（适用于需要短时间上下文的算法，如简单动作识别）
-  - `frame_count=30`：同时处理30帧（在30fps下约1秒视频），适用于需要更长时间上下文的算法
+  - `frame_count=5`：同时处理 5 帧（适用于需要短时间上下文的算法，如简单动作识别）
+  - `frame_count=30`：同时处理 30 帧（在 30fps 下约 1 秒视频），适用于需要更长时间上下文的算法
 
 - **frame_step**：帧之间的采样间隔。控制如何从缓冲区中选择帧：
+
   - `frame_step=0`：获取最近的`frame_count`个连续帧
-  - `frame_step=1`：获取每一帧（与0相同但更明确）
+  - `frame_step=1`：获取每一帧（与 0 相同但更明确）
   - `frame_step=2`：每隔一帧获取一帧（每个选定帧之间跳过一帧）
-  - `frame_step=10`：每隔10帧获取一帧（适用于分析较长时间范围内的变化）
+  - `frame_step=10`：每隔 10 帧获取一帧（适用于分析较长时间范围内的变化）
 
 - **interval**：算法执行之间的时间间隔（秒）。控制算法运行的频率：
-  - `interval=0.1`：每秒运行算法10次（适用于高频应用如跟踪）
+  - `interval=0.1`：每秒运行算法 10 次（适用于高频应用如跟踪）
   - `interval=1.0`：每秒运行算法一次（适用于一般的实时分析）
-  - `interval=5.0`：每5秒运行算法一次（适用于变化缓慢的场景或计算密集型算法）
+  - `interval=5.0`：每 5 秒运行算法一次（适用于变化缓慢的场景或计算密集型算法）
 
 ### Producer
 
@@ -302,20 +318,6 @@ producer = OpenCVProducer(1920, 1080)
 
 > [!NOTE]
 > 大部分情况下 `OpenCVProducer` 够用，且性能优秀。不过您仍然可能需要使用 `PyAVProducer` （基于 ffmpeg）用来加载一些 OpenCV 无法解码的视频或流
-
-### Player
-
-Player 输入 dispatcher, producer 和视频/流媒体地址进行播放与推理
-
-```python
-from stream_infer import Player
-
-...
-
-player = Player(dispatcher, producer, source, show_progress)
-```
-
-`show_progress` 参数默认为 True，此时会使用 tqdm 显示进度条，而设置为 False 时会通过 logger 打印。
 
 ### Run
 
