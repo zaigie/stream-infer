@@ -1,7 +1,7 @@
 import threading as th
 import gc
 import time
-from typing import Union, List, Literal, Dict, Tuple, Optional, Callable, Any
+from typing import Union, List, Dict, Tuple, Optional, Callable, Any
 from functools import lru_cache
 
 from .dispatcher import Dispatcher
@@ -189,11 +189,11 @@ class Inference:
             int: 状态码，-1表示失败，0表示成功
         """
         algo_instance, frame_count, frame_step, _ = inference_info
-        if self.dispatcher.buffer_size < frame_count * (
+        if self.dispatcher.get_buffer_size() < frame_count * (
             frame_step if frame_step > 0 else 1
         ):
             logger.error(
-                f"Dispatcher `buffer` size is too small for {algo_instance.name}, buffer_size={self.dispatcher.buffer_size} needed more than {frame_count * (frame_step if frame_step > 0 else 1)}"
+                f"Dispatcher `buffer` size is too small for {algo_instance.name}, buffer_size={self.dispatcher.get_buffer_size()} needed more than {frame_count * (frame_step if frame_step > 0 else 1)}"
             )
             return -1
         try:
@@ -262,9 +262,7 @@ class Inference:
         player: Player,
         fps: int = 30,
         position: int = 0,
-        mode: Literal["realtime", "offline"] = "realtime",
         recording_path: Optional[str] = None,
-        logging_level: str = "INFO",
     ) -> None:
         """启动推理
 
@@ -272,9 +270,7 @@ class Inference:
             player: 播放器实例
             fps: 每秒帧数
             position: 起始位置（秒）
-            mode: 模式，'realtime'或'offline'
             recording_path: 录制路径，如果为None则不录制
-            logging_level: 日志级别，可选值为'DEBUG', 'INFO', 'WARNING', 'ERROR'，默认为'INFO'
 
         Raises:
             ValueError: 如果mode不是支持的模式
@@ -283,14 +279,16 @@ class Inference:
         from stream_infer.log import set_log_level
 
         # 在主进程中设置日志级别
-        set_log_level(logging_level)
+        set_log_level(self.dispatcher.get_log_level())
+
+        mode = self.dispatcher.get_mode()
 
         try:
             if mode in [Mode.OFFLINE, Mode.OFFLINE.value]:
                 self._start_offline_mode(player, fps, position, recording_path)
             elif mode in [Mode.REALTIME, Mode.REALTIME.value]:
                 # 传递日志级别参数
-                self._start_realtime_mode(player, fps, logging_level=logging_level)
+                self._start_realtime_mode(player, fps)
             else:
                 err = f"Unsupported mode: {mode}, only support `realtime` or `offline`"
                 logger.error(err)
@@ -367,19 +365,21 @@ class Inference:
             if recorder:
                 recorder.close()
 
-    def _start_realtime_mode(
-        self, player: Player, fps: int, logging_level: str = "INFO"
-    ) -> None:
+    def _start_realtime_mode(self, player: Player, fps: int) -> None:
         """启动实时模式
 
         Args:
             player: 播放器实例
             fps: 每秒帧数
-            logging_level: 日志级别，可选值为'DEBUG', 'INFO', 'WARNING', 'ERROR'，默认为'INFO'
         """
+        # 设置日志级别
+        from stream_infer.log import set_log_level
+
+        set_log_level(self.dispatcher.get_log_level())
+
         try:
             # 启动异步播放和推理
-            player_thread = player.play_async(fps, logging_level=logging_level)
+            player_thread = player.play_async(fps)
             inference_thread = self.run_async()
 
             # 创建一个弱引用字典来跟踪已处理的帧

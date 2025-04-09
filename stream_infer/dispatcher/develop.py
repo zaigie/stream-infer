@@ -1,8 +1,8 @@
-from typing import Dict, Any, Optional, Tuple, Union
+from typing import Dict, Any, Optional, Tuple
 import threading
 from collections import defaultdict
 
-from .base import Dispatcher
+from .base import Dispatcher, Mode
 from ..log import logger
 
 
@@ -15,14 +15,17 @@ class DevelopDispatcher(Dispatcher):
         _results_lock: 保护结果字典的线程锁
     """
 
-    def __init__(self, buffer: int):
+    def __init__(self, mode: Mode, buffer: int, logging_level: str = "INFO", **kwargs):
         """
         初始化开发调度器
 
         Args:
-            buffer: 缓冲区大小（帧数）
+            mode: 模式
+            buffer: 缓冲区大小
+            logging_level: 日志级别，可选值为'DEBUG', 'INFO', 'WARNING', 'ERROR'，默认为'INFO'
+            **kwargs: 其他参数
         """
-        super().__init__(buffer)
+        super().__init__(mode, buffer, logging_level, **kwargs)
         self.collect_results: Dict[str, Dict[str, Any]] = defaultdict(dict)
         self._results_lock: threading.Lock = threading.Lock()
 

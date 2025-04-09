@@ -17,13 +17,12 @@ class Player:
         producer: Union[OpenCVProducer, PyAVProducer],
         source: Union[str, int],
         show_progress: bool = True,
-        logging_level: str = "INFO",
     ):
         # 设置日志级别
         from .log import set_log_level
 
-        set_log_level(logging_level)
         self.dispatcher = dispatcher
+        set_log_level(self.dispatcher.get_log_level())
         self.producer = producer
         self.source = source
         self.show_progress = show_progress
@@ -38,7 +37,13 @@ class Player:
         self.is_end = mp.Value("b", False)
 
     def play(self, fps=None, position=0):
+        logger.info(f"Source info: {self.info}")
         fps = self.fps if fps is None else fps
+        if fps > self.fps:
+            logger.warning(
+                f"FPS {fps} is too high(> {self.fps}), has been set to {self.fps}"
+            )
+            fps = self.fps
         self.play_fps = fps
         interval_count = 0
         if self.show_progress:
@@ -71,13 +76,12 @@ class Player:
         if self.show_progress:
             pbar.close()
 
-    def play_async(self, fps=None, logging_level="INFO"):
+    def play_async(self, fps=None):
         """
         根据帧数启动适当的流媒体进程。
 
         Args:
             fps: 每秒帧数，如果为None则使用视频原始帧率
-            logging_level: 日志级别，可选值为'DEBUG', 'INFO', 'WARNING', 'ERROR'，默认为'INFO'
         """
         if not isinstance(self.dispatcher, BaseProxy):
             logger.error(
@@ -87,17 +91,22 @@ class Player:
                 f"Dispatcher is not an proxy: {type(self.dispatcher)}, use create(mode='realtime') to create"
             )
 
-        if fps is None or fps >= self.fps:
+        fps = self.fps if fps is None else fps
+        if fps > self.fps:
+            logger.warning(
+                f"FPS {fps} is too high(> {self.fps}), has been set to {self.fps}"
+            )
             fps = self.fps
-            if fps > 30:
-                logger.warning(
-                    f"FPS {fps} is too high, if your player is playing more slowly than the actual time, set a lower play fps"
-                )
+        if fps > 30:
+            logger.warning(
+                f"FPS {fps} is too high, if your player is playing more slowly than the actual time, set a lower play fps"
+            )
         self.play_fps = fps
 
         # 在子进程中设置日志级别
         from .log import set_log_level
 
+        logging_level = self.dispatcher.get_log_level()
         set_log_level(logging_level)
 
         if self.frame_count <= 0:
@@ -126,13 +135,14 @@ class Player:
     def get_play_time(self) -> str:
         return position2time(self.dispatcher.get_current_position())
 
-    def video_stream(self, logging_level="INFO"):
+    def video_stream(self, logging_level):
         """
         处理视频文件的流媒体。帧按照视频的FPS决定的速率进行处理。
-
-        Args:
-            logging_level: 日志级别，可选值为'DEBUG', 'INFO', 'WARNING', 'ERROR'，默认为'INFO'
         """
+        from .log import set_log_level
+
+        set_log_level(logging_level)
+        logger.info(f"Source info: {self.info}")
         base_interval = 1 / self.play_fps
         start_time = time.time()
         interval_count = 0
@@ -161,13 +171,15 @@ class Player:
             pbar.close()
         self.is_end.value = True
 
-    def normal_stream(self, logging_level="INFO"):
+    def normal_stream(self, logging_level):
         """
         处理非视频文件的流媒体。帧按照规则间隔进行处理。
-
-        Args:
-            logging_level: 日志级别，可选值为'DEBUG', 'INFO', 'WARNING', 'ERROR'，默认为'INFO'
         """
+        from .log import set_log_level
+
+        set_log_level(logging_level)
+
+        logger.info(f"Source info: {self.info}")
         for frame in self.producer.read(self.source, self.play_fps):
             if self.dispatcher.get_current_frame_index() % self.play_fps == 0:
                 self.dispatcher.increase_current_position()

@@ -43,6 +43,7 @@ class DynamicConfig(BaseModel):
     producer: ProducerData
     process: Union[DynamicImport, None] = None
     recording_path: Union[str, None] = None
+    logging_level: Union[str, None] = None
 
 
 class DynamicApp:
@@ -57,7 +58,10 @@ class DynamicApp:
         dispatcher_module = self.dynamic_import(config.dispatcher.module)
         dispatcher_cls = getattr(dispatcher_module, config.dispatcher.name)
         self.dispatcher = dispatcher_cls.create(
-            mode=config.mode, *config.dispatcher.args, **config.dispatcher.kwargs
+            mode=config.mode,
+            logging_level=config.logging_level,
+            *config.dispatcher.args,
+            **config.dispatcher.kwargs,
         )
         self.inference = Inference(self.dispatcher)
         if config.process is not None:
@@ -83,7 +87,7 @@ class DynamicApp:
         for algo in self.config.algos:
             module = self.dynamic_import(algo.module)
             algo_class = getattr(module, algo.name)
-            self.inference.load_algo(algo_class(), **algo.kwargs.dict())
+            self.inference.load_algo(algo_class(), **algo.kwargs.model_dump())
         self.inference.start(
             Player(
                 self.dispatcher,
@@ -92,7 +96,6 @@ class DynamicApp:
                 show_progress=False,
             ),
             fps=self.config.fps,
-            mode=self.config.mode,
             recording_path=self.config.recording_path,
         )
 

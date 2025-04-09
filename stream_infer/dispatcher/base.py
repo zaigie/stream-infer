@@ -22,11 +22,12 @@ class Dispatcher:
         _lock: 线程锁，用于保护队列操作的线程安全
     """
 
-    def __init__(self, buffer: int, logging_level: str = "INFO", **kwargs):
+    def __init__(self, mode: Mode, buffer: int, logging_level: str = "INFO", **kwargs):
         """
         初始化调度器
 
         Args:
+            mode: 模式，'realtime'或'offline'
             buffer: 缓冲区大小（帧数）
             logging_level: 日志级别，可选值为'DEBUG', 'INFO', 'WARNING', 'ERROR'，默认为'INFO'
             **kwargs: 其他参数
@@ -41,6 +42,17 @@ class Dispatcher:
         self.current_position: int = 0
         self.current_frame_index: int = 0
         self._lock: threading.Lock = threading.Lock()
+        self._mode: Optional[Mode] = mode
+        self._log_level: str = logging_level
+
+    def get_mode(self) -> Optional[Mode]:
+        return self._mode
+
+    def get_buffer_size(self) -> int:
+        return self.buffer_size
+
+    def get_log_level(self) -> str:
+        return self._log_level
 
     def add_frame(self, frame: Any) -> None:
         """
@@ -164,6 +176,7 @@ class Dispatcher:
         cls,
         mode: Literal["realtime", "offline"] = "realtime",
         buffer: int = 30,
+        logging_level: str = "INFO",
         **kwargs,
     ) -> Union["Dispatcher", Any]:
         """
@@ -172,6 +185,7 @@ class Dispatcher:
         Args:
             mode: 模式，'realtime'或'offline'
             buffer: 缓冲区大小
+            logging_level: 日志级别，可选值为'DEBUG', 'INFO', 'WARNING', 'ERROR'，默认为'INFO'
             **kwargs: 其他参数
 
         Returns:
@@ -182,9 +196,11 @@ class Dispatcher:
         """
         try:
             if mode in [Mode.OFFLINE, Mode.OFFLINE.value]:
-                return cls(buffer, **kwargs)
+                return cls(Mode.OFFLINE, buffer, logging_level, **kwargs)
             elif mode in [Mode.REALTIME, Mode.REALTIME.value]:
-                return DispatcherManager(cls).create(buffer, **kwargs)
+                return DispatcherManager(cls).create(
+                    Mode.REALTIME, buffer, logging_level, **kwargs
+                )
             else:
                 err = f"Unsupported mode: {mode}, only support `realtime` or `offline`"
                 logger.error(err)
@@ -209,17 +225,20 @@ class DispatcherManager:
         初始化调度器管理器
 
         Args:
-            obj: 调度器类，如果为None则使用Dispatcher
+            obj: 调度器类, 如果为None则使用Dispatcher
         """
         self._manager: Optional[BaseManager] = None
         self._dispatcher: Optional[Any] = None
         self._obj: type = Dispatcher if obj is None else obj
 
-    def create(self, buffer: int, logging_level: str = "INFO", **kwargs) -> Any:
+    def create(
+        self, mode: Mode, buffer: int, logging_level: str = "INFO", **kwargs
+    ) -> Any:
         """
         创建调度器实例
 
         Args:
+            mode: 模式
             buffer: 缓冲区大小
             logging_level: 日志级别，可选值为'DEBUG', 'INFO', 'WARNING', 'ERROR'，默认为'INFO'
             **kwargs: 其他参数
@@ -229,32 +248,31 @@ class DispatcherManager:
         """
         try:
             if self._manager is None:
-                self._initialize_manager(buffer, logging_level=logging_level, **kwargs)
+                self._initialize_manager(mode, buffer, logging_level, **kwargs)
             return self._dispatcher
         except Exception as e:
             logger.error(f"Error creating dispatcher manager: {str(e)}")
             raise
 
     def _initialize_manager(
-        self, buffer: int, logging_level: str = "INFO", **kwargs
+        self, mode: Mode, buffer: int, logging_level: str = "INFO", **kwargs
     ) -> None:
         """
         初始化进程管理器
 
         Args:
+            mode: 模式
             buffer: 缓冲区大小
             logging_level: 日志级别，可选值为'DEBUG', 'INFO', 'WARNING', 'ERROR'，默认为'INFO'
             **kwargs: 其他参数
         """
         try:
-            # 在注册 Dispatcher 类时传递日志级别参数
-            kwargs["logging_level"] = logging_level
-
-            # 确保注册的类能够接收日志级别参数
             BaseManager.register("Dispatcher", self._obj)
             self._manager = BaseManager()
             self._manager.start()
-            self._dispatcher = self._manager.Dispatcher(buffer, **kwargs)
+            self._dispatcher = self._manager.Dispatcher(
+                mode, buffer, logging_level, **kwargs
+            )
             logger.debug("Successfully initialized dispatcher manager")
         except Exception as e:
             logger.error(f"Error initializing dispatcher manager: {str(e)}")

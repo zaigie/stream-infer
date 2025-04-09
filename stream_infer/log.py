@@ -40,4 +40,4 @@ def set_log_level(level="INFO"):
         _internal_logger.add(sys.stdout, format=_LOG_FORMAT, level=level)
 
         # 记录日志级别变更
-        _internal_logger.debug(f"Log level set to {level}")
+        # _internal_logger.debug(f"Log level set to {level}")
