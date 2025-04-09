@@ -6,7 +6,8 @@ from stream_infer.dispatcher import DevelopDispatcher
 from stream_infer.producer import OpenCVProducer
 
 dispatcher = DevelopDispatcher.create(mode="offline", buffer=1)
-inference = Inference(dispatcher)
+player = Player(dispatcher, OpenCVProducer(1920, 1080), source="./classroom.mp4")
+inference = Inference(dispatcher, player)
 
 
 # Set process func in offline inference
@@ -40,10 +41,5 @@ def offline_process(inference: Inference, frame, current_algo_names):
 
 inference.load_algo(YoloDetectionAlgo(), frame_count=1, frame_step=0, interval=0.1)
 cv2.namedWindow("Inference", cv2.WINDOW_NORMAL)
-inference.start(
-    Player(dispatcher, OpenCVProducer(1920, 1080), source="./classroom.mp4"),
-    fps=30,
-    position=0,
-    recording_path="./processed.mp4",
-)
+inference.start(fps=30, position=0, recording_path="./processed.mp4")
 cv2.destroyAllWindows()

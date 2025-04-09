@@ -45,24 +45,40 @@ class StreamlitApp:
             )
             res_width, res_height = st.columns(2)
             self.width = res_width.number_input(
-                "推理宽度", 320, 1920, 1920, disabled=self.get_state("input_disabled", bool)
+                "推理宽度",
+                320,
+                1920,
+                1920,
+                disabled=self.get_state("input_disabled", bool),
             )
             self.height = res_height.number_input(
-                "推理高度", 180, 1080, 1080, disabled=self.get_state("input_disabled", bool)
+                "推理高度",
+                180,
+                1080,
+                1080,
+                disabled=self.get_state("input_disabled", bool),
             )
             self.frame_rate = st.slider(
                 "帧率", 1, 60, 10, disabled=self.get_state("input_disabled", bool)
             )
             self.color_channel = st.selectbox(
-                "颜色通道", ("BGR", "RGB"), disabled=self.get_state("input_disabled", bool)
+                "颜色通道",
+                ("BGR", "RGB"),
+                disabled=self.get_state("input_disabled", bool),
             )
             self.start_position = st.number_input(
-                "起始播放位置(秒)", 0, 1000, 0, disabled=self.get_state("input_disabled", bool)
+                "起始播放位置(秒)",
+                0,
+                1000,
+                0,
+                disabled=self.get_state("input_disabled", bool),
             )
             st.divider()
 
             self.show_frame = st.toggle(
-                "展示视频帧", value=True, disabled=self.get_state("control_disabled", bool)
+                "展示视频帧",
+                value=True,
+                disabled=self.get_state("control_disabled", bool),
             )
             self.show_output = st.toggle(
                 "展示推理数据", disabled=self.get_state("control_disabled", bool)
@@ -135,6 +151,7 @@ class StreamlitApp:
             source=self.source,
             show_progress=False,
         )
+        self.inference.player = player
 
         video_info = player.info
         is_realtime = video_info["frame_count"] <= 0

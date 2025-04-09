@@ -14,8 +14,9 @@ from .log import logger
 
 
 class Inference:
-    def __init__(self, dispatcher: Dispatcher):
+    def __init__(self, dispatcher: Dispatcher, player: Optional[Player] = None):
         self.dispatcher = dispatcher
+        self.player = player
         self.inferences_info: List[Tuple[BaseAlgo, int, int, Union[int, float]]] = []
         self.timers: Dict[str, Timer] = {}
 
@@ -263,7 +264,6 @@ class Inference:
 
     def start(
         self,
-        player: Player,
         fps: int = 30,
         position: int = 0,
         recording_path: Optional[str] = None,
@@ -271,14 +271,18 @@ class Inference:
         """启动推理
 
         Args:
-            player: 播放器实例
             fps: 每秒帧数
             position: 起始位置（秒）
             recording_path: 录制路径，如果为None则不录制
 
         Raises:
-            ValueError: 如果mode不是支持的模式
+            ValueError: 如果mode不是支持的模式或player未设置
         """
+        if self.player is None:
+            err = "Player is not set. Please set player when initializing Inference."
+            logger.error(err)
+            raise ValueError(err)
+
         # 设置日志级别
         from stream_infer.log import set_log_level
 
@@ -289,12 +293,12 @@ class Inference:
 
         try:
             if mode in [Mode.OFFLINE, Mode.OFFLINE.value]:
-                self._start_offline_mode(player, fps, position, recording_path)
+                self._start_offline_mode(self.player, fps, position, recording_path)
             elif mode in [Mode.REALTIME, Mode.REALTIME.value]:
                 # 传递日志级别参数
                 if recording_path:
                     logger.warning("Realtime mode not support recording")
-                self._start_realtime_mode(player, fps)
+                self._start_realtime_mode(self.player, fps)
             else:
                 err = f"Unsupported mode: {mode}, only support `realtime` or `offline`"
                 logger.error(err)
