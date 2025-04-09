@@ -63,12 +63,6 @@ class DynamicApp:
             *config.dispatcher.args,
             **config.dispatcher.kwargs,
         )
-        self.inference = Inference(self.dispatcher)
-        if config.process is not None:
-            process_module = self.dynamic_import(config.process.module)
-            self.inference.process(getattr(process_module, config.process.name))
-
-    def start(self):
         if self.config.producer.type in [
             ProducerType.OPENCV,
             ProducerType.OPENCV.value,
@@ -84,19 +78,21 @@ class DynamicApp:
             raise ValueError(
                 f"Unknown producer: {producer}, must be 'opencv' or 'pyav'"
             )
+        self.player = Player(
+            self.dispatcher, producer, source=self.config.source, show_progress=False
+        )
+        self.inference = Inference(self.dispatcher, self.player)
+        if config.process is not None:
+            process_module = self.dynamic_import(config.process.module)
+            self.inference.process(getattr(process_module, config.process.name))
+
+    def start(self):
         for algo in self.config.algos:
             module = self.dynamic_import(algo.module)
             algo_class = getattr(module, algo.name)
             self.inference.load_algo(algo_class(), **algo.kwargs.model_dump())
         self.inference.start(
-            Player(
-                self.dispatcher,
-                producer,
-                source=self.config.source,
-                show_progress=False,
-            ),
-            fps=self.config.fps,
-            recording_path=self.config.recording_path,
+            fps=self.config.fps, recording_path=self.config.recording_path
         )
 
     @staticmethod

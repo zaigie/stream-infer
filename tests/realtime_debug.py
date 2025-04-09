@@ -51,16 +51,9 @@ if __name__ == "__main__":
     dispatcher = DebugDispatcher.create(
         mode="realtime", buffer=30, logging_level="WARNING"
     )
-    inference = Inference(dispatcher)
+    player = Player(dispatcher, PyAVProducer(1920, 1080), source="./classroom.mp4")
+    inference = Inference(dispatcher, player)
 
     inference.process(realtime_process)
     inference.load_algo(DebugAlgo(), frame_count=10, frame_step=3, interval=1)
-    inference.start(
-        Player(
-            dispatcher,
-            PyAVProducer(1920, 1080),
-            source="./classroom.mp4",
-            show_progress=False,
-        ),
-        fps=30,
-    )
+    inference.start(fps=30)
