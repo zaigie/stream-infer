@@ -19,6 +19,7 @@ config = {
     "producer": {"type": "opencv", "width": 640, "height": 360},
     # "process": {"module": "./dynamic_process.py", "name": "dynamic_process"},
     # "recording_path": "./processed.mp4",
+    "logging_level": "DEBUG",
 }
 
 # process and recording_path are optional

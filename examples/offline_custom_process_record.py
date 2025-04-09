@@ -11,7 +11,7 @@ inference = Inference(dispatcher)
 
 # Set process func in offline inference
 @inference.process
-def offline_process(inference: Inference, *args, **kwargs):
+def offline_process(inference: Inference, frame, current_algo_names):
     def draw_boxes(frame, data):
         names = data.names
         boxes = data.boxes
@@ -31,8 +31,6 @@ def offline_process(inference: Inference, *args, **kwargs):
                 2,
             )
 
-    frame = kwargs.get("frame")
-    # current_algo_names = kwargs.get("current_algo_names")
     _, data = inference.dispatcher.get_last_result("YoloDetectionAlgo", clear=False)
     if data is not None:
         draw_boxes(frame, data)
@@ -40,10 +38,12 @@ def offline_process(inference: Inference, *args, **kwargs):
         cv2.waitKey(1)
 
 
-player = Player(dispatcher, OpenCVProducer(1920, 1080), source="./classroom.mp4")
 inference.load_algo(YoloDetectionAlgo(), frame_count=1, frame_step=0, interval=0.1)
 cv2.namedWindow("Inference", cv2.WINDOW_NORMAL)
 inference.start(
-    player, fps=30, position=0, mode="offline", recording_path="./processed.mp4"
+    Player(dispatcher, OpenCVProducer(1920, 1080), source="./classroom.mp4"),
+    fps=30,
+    position=0,
+    recording_path="./processed.mp4",
 )
 cv2.destroyAllWindows()
