@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any
 
 from stream_infer import Inference, Player
 from stream_infer.algo import BaseAlgo
@@ -29,17 +29,16 @@ class DebugAlgo(BaseAlgo):
 
 class DebugDispatcher(DevelopDispatcher):
     def add_frame(self, frame: Any) -> None:
-        current_idx = self.current_frame_index
-        frame = (current_idx, frame)
+        frame = (self.current_frame_index, frame)
         super().add_frame(frame)
 
 
-dispatcher = DebugDispatcher.create(mode="offline", buffer=30)
+dispatcher = DebugDispatcher.create(mode="offline", buffer=30, logging_level="WARNING")
 inference = Inference(dispatcher)
 
 
 @inference.process
-def offline_process(inference: Inference, *args, **kwargs):
+def offline_process(inference: Inference, frame, current_algo_names):
     global last_result_count
     data = inference.dispatcher.get_result("DebugAlgo", clear=False)
     if data is not None and len(data) > last_result_count:
@@ -48,10 +47,13 @@ def offline_process(inference: Inference, *args, **kwargs):
 
 
 inference.load_algo(DebugAlgo(), frame_count=10, frame_step=3, interval=1)
-player = Player(
-    dispatcher,
-    OpenCVProducer(1920, 1080),
-    source="./classroom.mp4",
-    show_progress=False,
+inference.start(
+    Player(
+        dispatcher,
+        OpenCVProducer(1920, 1080),
+        source="./classroom.mp4",
+        show_progress=False,
+    ),
+    fps=30,
+    position=10,
 )
-inference.start(player, fps=30, position=0, mode="offline", logging_level="WARNING")
