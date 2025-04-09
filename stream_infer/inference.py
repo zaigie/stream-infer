@@ -409,7 +409,9 @@ class Inference:
 
                     # 处理帧
                     if current_frame is not None:
-                        processed_frame = self.process_func(frame=current_frame)
+                        processed_frame = self.process_func(
+                            frame=current_frame, current_algo_names=None
+                        )
                         if processed_frame is not None:
                             # 将处理过的帧添加到弱引用字典中
                             processed_frames[frame_count] = processed_frame
