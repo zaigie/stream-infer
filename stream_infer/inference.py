@@ -254,6 +254,10 @@ class Inference:
                 logger.error(f"Error in process function: {str(e)}")
                 return None
 
+        if self.dispatcher.get_mode() == Mode.REALTIME:
+            logger.warning(
+                "Realtime mode process function not support `current_algo_names`"
+            )
         self.process_func = wrapper
         return wrapper
 
@@ -288,6 +292,8 @@ class Inference:
                 self._start_offline_mode(player, fps, position, recording_path)
             elif mode in [Mode.REALTIME, Mode.REALTIME.value]:
                 # 传递日志级别参数
+                if recording_path:
+                    logger.warning("Realtime mode not support recording")
                 self._start_realtime_mode(player, fps)
             else:
                 err = f"Unsupported mode: {mode}, only support `realtime` or `offline`"
