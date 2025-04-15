@@ -1,4 +1,5 @@
 import sys
+import os
 import threading
 from loguru import logger as _logger
 
@@ -8,9 +9,12 @@ _LOG_FORMAT = "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8
 # 创建一个库内部独立的logger
 _internal_logger = _logger.bind(library="stream_infer")
 
-# 初始化日志配置，默认级别为INFO
+# 从环境变量获取日志级别，如果未设置则默认为INFO
+default_level = os.environ.get("STREAM_INFER_LOG_LEVEL", "INFO")
+
+# 初始化日志配置
 _internal_logger.remove()
-_internal_logger.add(sys.stdout, format=_LOG_FORMAT, level="INFO")
+_internal_logger.add(sys.stdout, format=_LOG_FORMAT, level=default_level)
 
 # 导出库内部使用的logger
 logger = _internal_logger
@@ -32,6 +36,9 @@ def set_log_level(level="INFO"):
     level = level.upper()
     if level not in ["DEBUG", "INFO", "WARNING", "ERROR"]:
         level = "INFO"
+
+    # 设置环境变量，使子进程可以继承日志级别
+    os.environ["STREAM_INFER_LOG_LEVEL"] = level
 
     # 使用线程锁确保线程安全
     with _log_lock:

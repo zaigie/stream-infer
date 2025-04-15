@@ -51,12 +51,6 @@ class DebugDispatcher(DevelopDispatcher):
         super().add_frame(frame)
 
 
-dispatcher = DebugDispatcher.create(mode="offline", buffer=30, logging_level="WARNING")
-player = Player(dispatcher, OpenCVProducer(1920, 1080), source="./classroom.mp4")
-inference = Inference(dispatcher, player)
-
-
-@inference.process
 def offline_process(inference: Inference, *args, **kwargs):
     global last_result_count
     data = inference.dispatcher.get_result("DebugAlgo", clear=False)
@@ -67,6 +61,23 @@ def offline_process(inference: Inference, *args, **kwargs):
     last_result_count = len(data) if data else 0
 
 
-inference.load_algo(DebugAlgo(), frame_count=10, frame_step=3, interval=1)
-inference.load_algo(DebugTimeConsumer(), frame_count=10, frame_step=3, interval=5)
-inference.start(fps=30, position=10)
+if __name__ == "__main__":
+    dispatcher = DebugDispatcher.create(
+        mode="offline", buffer=30, logging_level="WARNING"
+    )
+    player = Player(
+        dispatcher,
+        OpenCVProducer(1920, 1080),
+        source="./classroom.mp4",
+        show_progress=False,
+    )
+    inference = Inference(dispatcher, player)
+    inference.process(offline_process)
+
+    inference.load_algo(DebugAlgo(), frame_count=10, frame_step=3, interval=1)
+    inference.load_algo(DebugTimeConsumer(), frame_count=10, frame_step=3, interval=5)
+
+    start_time = time.time()
+    inference.start(fps=30, position=10, parallel=True)
+    end_time = time.time()
+    print(f"[Debug] Total time: {end_time - start_time:.2f} seconds")

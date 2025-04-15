@@ -1,5 +1,5 @@
 from typing import Dict, Any, Optional, Tuple
-import threading
+import multiprocessing as mp
 from collections import defaultdict
 
 from .base import Dispatcher, Mode
@@ -27,7 +27,7 @@ class DevelopDispatcher(Dispatcher):
         """
         super().__init__(mode, buffer, logging_level, **kwargs)
         self.collect_results: Dict[str, Dict[str, Any]] = defaultdict(dict)
-        self._results_lock: threading.Lock = threading.Lock()
+        self._results_lock = mp.Lock()  # 使用多进程锁替代线程锁
 
     def collect(self, position: int, algo_name: str, result: Any) -> None:
         """

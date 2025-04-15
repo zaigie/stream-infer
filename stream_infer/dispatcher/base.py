@@ -1,6 +1,6 @@
 from multiprocessing.managers import BaseManager
 from collections import deque
-import threading
+import multiprocessing as mp
 from typing import List, Any, Literal, Optional, Deque, Union, TypeVar
 
 from ..util import position2time
@@ -41,7 +41,7 @@ class Dispatcher:
         self.queue: Deque[Any] = deque(maxlen=buffer)
         self.current_position: int = 0
         self.current_frame_index: int = 0
-        self._lock: threading.Lock = threading.Lock()
+        self._lock = mp.Lock()  # 使用多进程锁替代线程锁，使其成为多进程安全的对象
         self._mode: Optional[Mode] = mode
         self._log_level: str = logging_level
         self.last_algo_name: Optional[str] = None
