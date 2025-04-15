@@ -12,7 +12,9 @@ inference = Inference(dispatcher, player)
 
 # Set process func in offline inference
 @inference.process
-def offline_process(inference: Inference, frame, current_algo_names):
+def offline_process(inference: Inference, *args, **kwargs):
+    frame = kwargs["frame"]
+
     def draw_boxes(frame, data):
         names = data.names
         boxes = data.boxes

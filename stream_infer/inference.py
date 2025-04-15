@@ -226,6 +226,7 @@ class Inference:
                 self._get_cached_result(algo_instance.name, frame_hash)
 
             # 收集结果
+            self.dispatcher.set_last_algo_name(algo_instance.name)
             self.dispatcher.collect(
                 self.dispatcher.get_current_position(), algo_instance.name, result
             )
@@ -339,7 +340,9 @@ class Inference:
                     frame_copy = np.copy(frame) if frame is not None else None
 
                     processed_frame = self.process_func(
-                        frame=frame_copy, current_algo_names=current_algo_names
+                        frame=frame_copy,
+                        current_algo_names=current_algo_names,
+                        last_algo_name=self.dispatcher.get_last_algo_name(),
                     )
                     frame_to_use = (
                         processed_frame if processed_frame is not None else frame_copy
@@ -420,7 +423,9 @@ class Inference:
                     # 处理帧
                     if current_frame is not None:
                         processed_frame = self.process_func(
-                            frame=current_frame, current_algo_names=None
+                            frame=current_frame,
+                            current_algo_names=None,
+                            last_algo_name=self.dispatcher.get_last_algo_name(),
                         )
                         if processed_frame is not None:
                             # 将处理过的帧添加到弱引用字典中

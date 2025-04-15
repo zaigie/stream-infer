@@ -19,7 +19,7 @@ class Dispatcher:
         queue: 帧缓冲队列
         current_position: 当前位置（秒）
         current_frame_index: 当前帧索引
-        _lock: 线程锁，用于保护队列操作的线程安全
+        last_algo_name: 最后一次运行的算法名称
     """
 
     def __init__(self, mode: Mode, buffer: int, logging_level: str = "INFO", **kwargs):
@@ -44,6 +44,7 @@ class Dispatcher:
         self._lock: threading.Lock = threading.Lock()
         self._mode: Optional[Mode] = mode
         self._log_level: str = logging_level
+        self.last_algo_name: Optional[str] = None
 
     def get_mode(self) -> Optional[Mode]:
         return self._mode
@@ -53,6 +54,12 @@ class Dispatcher:
 
     def get_log_level(self) -> str:
         return self._log_level
+
+    def get_last_algo_name(self) -> Optional[str]:
+        return self.last_algo_name
+
+    def set_last_algo_name(self, algo_name: Optional[str]) -> None:
+        self.last_algo_name = algo_name
 
     def add_frame(self, frame: Any) -> None:
         """

@@ -6,7 +6,7 @@ from stream_infer.log import logger
 from stream_infer.producer import OpenCVProducer
 
 
-def realtime_process(inference: Inference, frame, current_algo_names):
+def realtime_process(inference: Inference, *args, **kwargs):
     _, data = inference.dispatcher.get_last_result("YoloDetectionAlgo2", clear=True)
     if data is not None:
         logger.debug(f"{data}")
