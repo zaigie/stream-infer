@@ -45,6 +45,7 @@ class Player:
             )
             fps = self.fps
         self.play_fps = fps
+        self.dispatcher.set_fps(fps)
         interval_count = 0
         if self.show_progress:
             pbar = tqdm(
@@ -102,6 +103,7 @@ class Player:
                 f"FPS {fps} is too high, if your player is playing more slowly than the actual time, set a lower play fps"
             )
         self.play_fps = fps
+        self.dispatcher.set_fps(fps)
 
         # 在子进程中设置日志级别
         from .log import set_log_level

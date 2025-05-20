@@ -45,6 +45,7 @@ class Dispatcher:
         self._mode: Optional[Mode] = mode
         self._log_level: str = logging_level
         self.last_algo_name: Optional[str] = None
+        self.fps: float = 0
 
     def get_mode(self) -> Optional[Mode]:
         return self._mode
@@ -60,6 +61,12 @@ class Dispatcher:
 
     def set_last_algo_name(self, algo_name: Optional[str]) -> None:
         self.last_algo_name = algo_name
+
+    def get_fps(self) -> float:
+        return self.fps
+
+    def set_fps(self, fps: float) -> None:
+        self.fps = fps
 
     def add_frame(self, frame: Any) -> None:
         """
