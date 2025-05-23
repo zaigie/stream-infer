@@ -24,7 +24,7 @@ class ImageIOProducer:
         try:
             reader = imageio.get_reader(path)
         except Exception as e:
-            logger.error(f"Error reading video: {e}")
+            logger.error("Error reading video", e)
             raise e
 
         original_fps = reader.get_meta_data()["fps"]
@@ -51,7 +51,7 @@ class ImageIOProducer:
                     frame_interval  # Update the next frame index to process
                 )
             except Exception as e:
-                logger.error(f"Error processing frame: {e}")
+                logger.error("Error processing frame", e)
                 raise e
 
             frame_index += 1

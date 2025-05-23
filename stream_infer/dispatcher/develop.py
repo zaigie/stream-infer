@@ -85,7 +85,7 @@ class DevelopDispatcher(Dispatcher):
                 time_point = max(int(k) for k in algo_results.keys())
                 return time_point, algo_results[str(time_point)]
             except (ValueError, KeyError) as e:
-                logger.error(f"Error getting last result for {name}: {str(e)}")
+                logger.error(f"Error getting last result for {name}", e)
         return -1, None
 
     def clear(self) -> None:

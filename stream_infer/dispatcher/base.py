@@ -220,8 +220,8 @@ class Dispatcher:
                 logger.error(err)
                 raise ValueError(err)
         except Exception as e:
-            logger.error(f"Error creating dispatcher: {str(e)}")
-            raise
+            logger.error("Error creating dispatcher", e)
+            raise e
 
 
 class DispatcherManager:
@@ -265,8 +265,8 @@ class DispatcherManager:
                 self._initialize_manager(mode, buffer, logging_level, **kwargs)
             return self._dispatcher
         except Exception as e:
-            logger.error(f"Error creating dispatcher manager: {str(e)}")
-            raise
+            logger.error("Error creating dispatcher manager", e)
+            raise e
 
     def _initialize_manager(
         self, mode: Mode, buffer: int, logging_level: str = "INFO", **kwargs
@@ -289,5 +289,5 @@ class DispatcherManager:
             )
             logger.debug("Successfully initialized dispatcher manager")
         except Exception as e:
-            logger.error(f"Error initializing dispatcher manager: {str(e)}")
-            raise
+            logger.error("Error initializing dispatcher manager", e)
+            raise e

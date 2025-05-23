@@ -51,8 +51,7 @@ class DynamicApp:
         try:
             config = DynamicConfig(**config)
         except ValidationError as e:
-            err = f"Invalid config: {e}"
-            logger.error(err)
+            logger.error("Invalid config", e)
             raise e
         self.config = config
         dispatcher_module = self.dynamic_import(config.dispatcher.module)

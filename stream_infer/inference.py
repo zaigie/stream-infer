@@ -58,8 +58,8 @@ class Inference:
             algo_instance.init(**kwargs)
             logger.info(f"Successfully loaded algorithm: {algo_instance.name}")
         except Exception as e:
-            logger.error(f"Failed to load algorithm {algo_instance.name}: {str(e)}")
-            raise
+            logger.error(f"Failed to load algorithm {algo_instance.name}", e)
+            raise e
 
     def list_algos(self) -> List[str]:
         """列出所有已加载的算法名称
@@ -86,9 +86,7 @@ class Inference:
                 try:
                     self._infer(inference_info)
                 except Exception as e:
-                    logger.error(
-                        f"Error running inference for {algo_instance.name}: {str(e)}"
-                    )
+                    logger.error(f"Error running inference for {algo_instance.name}", e)
                     # 继续执行其他算法，不让一个算法的失败影响整体
 
     def run_loop(self) -> None:
@@ -99,7 +97,7 @@ class Inference:
                 # 添加短暂休眠以减少CPU使用率
                 time.sleep(0.001)
         except Exception as e:
-            logger.error(f"Error in run loop: {str(e)}")
+            logger.error("Error in run loop", e)
             self.is_stop = True
 
     def run_async(self) -> th.Thread:
@@ -138,9 +136,7 @@ class Inference:
                     self.run_specific(algo_instance.name)
                     current_algo_names.append(algo_instance.name)
                 except Exception as e:
-                    logger.error(
-                        f"Error running algorithm {algo_instance.name}: {str(e)}"
-                    )
+                    logger.error(f"Error running algorithm {algo_instance.name}", e)
         return current_algo_names
 
     def run_specific(self, algo_name: str) -> bool:
@@ -159,7 +155,7 @@ class Inference:
                     self._infer(inference_info)
                     return True
                 except Exception as e:
-                    logger.error(f"Error running algorithm {algo_name}: {str(e)}")
+                    logger.error(f"Error running algorithm {algo_name}", e)
                     return False
         logger.warning(f"Algorithm {algo_name} not found")
         return False
@@ -232,7 +228,7 @@ class Inference:
             )
             return 0
         except Exception as e:
-            logger.error(f"Error in inference for {algo_instance.name}: {str(e)}")
+            logger.error(f"Error in inference for {algo_instance.name}", e)
             return -1
 
     def default_process(self, *args, **kwargs) -> None:
@@ -253,7 +249,7 @@ class Inference:
             try:
                 return func(self, *args, **kwargs)
             except Exception as e:
-                logger.error(f"Error in process function: {str(e)}")
+                logger.error(f"Error in process function", e)
                 return None
 
         if self.dispatcher.get_mode() == Mode.REALTIME:
@@ -348,7 +344,7 @@ class Inference:
                         processed_frame if processed_frame is not None else frame_copy
                     )
                 except Exception as e:
-                    logger.error(f"Error in process function: {str(e)}")
+                    logger.error(f"Error in process function", e)
                     frame_to_use = frame
 
                 # 录制处理后的帧
@@ -418,7 +414,7 @@ class Inference:
                                 np.copy(frames[0]) if frames[0] is not None else None
                             )
                     except Exception as e:
-                        logger.error(f"Error getting frames: {str(e)}")
+                        logger.error("Error getting frames", e)
 
                     # 处理帧
                     if current_frame is not None:
@@ -452,7 +448,7 @@ class Inference:
                             f"Performed garbage collection in realtime mode, frame count: {frame_count}, processed frames: {len(processed_frames)}"
                         )
                 except Exception as e:
-                    logger.error(f"Error in process function: {str(e)}")
+                    logger.error(f"Error in process function", e)
         finally:
             # 确保资源被清理
             self.stop()

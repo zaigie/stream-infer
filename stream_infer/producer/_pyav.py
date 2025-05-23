@@ -52,14 +52,14 @@ class PyAVProducer:
                         yield frame
                         next_frame_to_process += frame_interval
                     except Exception as e:
-                        logger.error(f"Error processing frame: {e}")
+                        logger.error("Error processing frame", e)
                         raise e
 
                 frame_index += 1
 
         except Exception as e:
-            logger.error(f"Failed to open {source}: {e}")
-            raise ValueError(f"Failed to open {source}: {e}")
+            logger.error(f"Failed to open {source}", e)
+            raise ValueError(f"Failed to open {source}")
 
         container.close()
 
@@ -97,4 +97,5 @@ class PyAVProducer:
             }
 
         except av.AVError as e:
-            raise ValueError(f"Failed to open {source}: {e}")
+            logger.error(f"Failed to open {source}", e)
+            raise ValueError(f"Failed to open {source}")

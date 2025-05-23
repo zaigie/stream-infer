@@ -1,5 +1,8 @@
+from functools import wraps
 import sys
 import threading
+import traceback
+
 from loguru import logger as _logger
 
 # 默认日志格式
@@ -41,3 +44,20 @@ def set_log_level(level="INFO"):
 
         # 记录日志级别变更
         # _internal_logger.debug(f"Log level set to {level}")
+
+        def add_extra_info(func):
+            @wraps(func)
+            def wrapper(message, exception=None, *args, **kwargs):
+                if exception:
+                    message += f": {str(exception)}"
+                    tb_str = "".join(
+                        traceback.format_exception(
+                            type(exception), exception, exception.__traceback__
+                        )
+                    )
+                    message += f"\n{tb_str}"
+                return func(message, *args, **kwargs)
+
+            return wrapper
+
+        _internal_logger.error = add_extra_info(_internal_logger.error)
