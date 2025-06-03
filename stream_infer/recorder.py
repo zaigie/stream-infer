@@ -1,7 +1,7 @@
 import av
 import os
 import cv2
-
+from .log import logger
 from .producer import OpenCVProducer, PyAVProducer
 from .player import Player
 from .model import RecordMode
