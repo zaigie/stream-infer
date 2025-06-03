@@ -32,12 +32,18 @@ class Recorder:
     def _init_opencv_writer(self):
         self.record_mode = RecordMode.OPENCV
         fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+        logger.debug(
+            f"OpenCVWriter initialized with path: {self.recording_path}\t fps: {self.fps}\t width: {self.width}\t height: {self.height}"
+        )
         self.writer = cv2.VideoWriter(
             self.recording_path, fourcc, self.fps, (self.width, self.height)
         )
 
     def _init_pyav_writer(self):
         self.record_mode = RecordMode.PYAV
+        logger.debug(
+            f"PyAVWriter initialized with path: {self.recording_path}\t fps: {self.fps}\t width: {self.width}\t height: {self.height}"
+        )
         try:
             container = av.open(self.recording_path, mode="w")
         except av.AVError as e:
@@ -61,7 +67,7 @@ class Recorder:
 
     def _add_frame_pyav(self, frame):
         frame = av.VideoFrame.from_ndarray(frame, format=self.player.producer.format)
-        frame.pict_type = "NONE"
+        frame.pict_type = 0
         for packet in self.stream.encode(frame):
             self.container.mux(packet)
 
