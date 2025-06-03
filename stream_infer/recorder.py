@@ -33,16 +33,16 @@ class Recorder:
         self.record_mode = RecordMode.OPENCV
         fourcc = cv2.VideoWriter_fourcc(*"mp4v")
         logger.debug(
-            f"OpenCVWriter initialized with path: {self.recording_path}\t fps: {self.fps}\t width: {self.width}\t height: {self.height}"
+            f"OpenCVWriter initialized with path: {self.recording_path}\t fps: {self.fps}\t width: {int(self.width)}\t height: {int(self.height)}"
         )
         self.writer = cv2.VideoWriter(
-            self.recording_path, fourcc, self.fps, (self.width, self.height)
+            self.recording_path, fourcc, self.fps, (int(self.width), int(self.height))
         )
 
     def _init_pyav_writer(self):
         self.record_mode = RecordMode.PYAV
         logger.debug(
-            f"PyAVWriter initialized with path: {self.recording_path}\t fps: {self.fps}\t width: {self.width}\t height: {self.height}"
+            f"PyAVWriter initialized with path: {self.recording_path}\t fps: {self.fps}\t width: {int(self.width)}\t height: {int(self.height)}"
         )
         try:
             container = av.open(self.recording_path, mode="w")
@@ -50,7 +50,7 @@ class Recorder:
             # Handle AVError if necessary
             raise e
         stream = container.add_stream("h264", rate=self.fps)
-        stream.width, stream.height = (self.width, self.height)
+        stream.width, stream.height = (int(self.width), int(self.height))
         stream.pix_fmt = "yuv420p"
         self.container = container
         self.stream = stream
