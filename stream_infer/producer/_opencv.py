@@ -4,7 +4,7 @@ from ..log import logger
 
 
 class OpenCVProducer:
-    def __init__(self, width: int, height: int, cvt_code=None):
+    def __init__(self, width: int = None, height: int = None, cvt_code=None):
         self.width = width
         self.height = height
         self.cvt_code = cvt_code
@@ -46,7 +46,11 @@ class OpenCVProducer:
             if frame_index >= next_frame_to_process:
                 try:
                     height, width, _ = frame.shape
-                    if width != self.width or height != self.height:
+                    if (
+                        self.width is not None
+                        and self.height is not None
+                        and (width != self.width or height != self.height)
+                    ):
                         frame = cv2.resize(frame, (self.width, self.height))
 
                     if self.cvt_code is not None:

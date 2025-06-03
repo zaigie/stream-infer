@@ -5,7 +5,7 @@ from ..log import logger
 
 
 class PyAVProducer:
-    def __init__(self, width: int, height: int, format=None):
+    def __init__(self, width: int = None, height: int = None, format=None):
         self.width = width
         self.height = height
         self.format = "bgr24" if format is None else format
@@ -46,7 +46,11 @@ class PyAVProducer:
                     try:
                         frame = frame.to_ndarray(format=self.format)
                         height, width, _ = frame.shape
-                        if width != self.width or height != self.height:
+                        if (
+                            self.width is not None
+                            and self.height is not None
+                            and (width != self.width or height != self.height)
+                        ):
                             frame = cv2.resize(frame, (self.width, self.height))
 
                         yield frame
